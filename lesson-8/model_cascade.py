@@ -126,10 +126,7 @@ You must respond with ONLY True or False:"""
             if logprobs and logprobs.content:
                 first_logprob = logprobs.content[0]
                 top = first_logprob.top_logprobs or []
-                confidence = get_answer_prob_binary(
-                    {item.token: item.logprob for item in top},
-                    response_converted,
-                )
+                confidence = get_answer_prob_binary({item.token: item.logprob for item in top}, response_converted)
         else:
             confidence = 0.0  # No confidence for oracle
 

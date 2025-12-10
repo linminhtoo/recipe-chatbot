@@ -71,10 +71,7 @@ class QueryRewriteAgent:
 
         try:
             response = self._client.chat.completions.create(
-                model=self._model_id,
-                messages=[{"role": "user", "content": prompt}],
-                temperature=0.2,
-                max_tokens=100,
+                model=self._model_id, messages=[{"role": "user", "content": prompt}], temperature=0.2, max_tokens=100
             )
             keywords = (response.choices[0].message.content or "").strip()
             return keywords
@@ -104,10 +101,7 @@ class QueryRewriteAgent:
 
         try:
             response = self._client.chat.completions.create(
-                model=self._model_id,
-                messages=[{"role": "user", "content": prompt}],
-                temperature=0.3,
-                max_tokens=150,
+                model=self._model_id, messages=[{"role": "user", "content": prompt}], temperature=0.3, max_tokens=150
             )
             rewritten = (response.choices[0].message.content or "").strip()
             return rewritten
@@ -137,10 +131,7 @@ class QueryRewriteAgent:
 
         try:
             response = self._client.chat.completions.create(
-                model=self._model_id,
-                messages=[{"role": "user", "content": prompt}],
-                temperature=0.4,
-                max_tokens=200,
+                model=self._model_id, messages=[{"role": "user", "content": prompt}], temperature=0.4, max_tokens=200
             )
             expanded = (response.choices[0].message.content or "").strip()
             return expanded

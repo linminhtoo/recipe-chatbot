@@ -76,10 +76,7 @@ Salient Fact(s):
 
         try:
             response = self._client.chat.completions.create(
-                model=self._model_id,
-                messages=[{"role": "user", "content": prompt}],
-                temperature=0.3,
-                max_tokens=200,
+                model=self._model_id, messages=[{"role": "user", "content": prompt}], temperature=0.3, max_tokens=200
             )
             return (response.choices[0].message.content or "").strip()
         except Exception as e:
@@ -118,10 +115,7 @@ Generate ONE specific query:
 
         try:
             response = self._client.chat.completions.create(
-                model=self._model_id,
-                messages=[{"role": "user", "content": prompt}],
-                temperature=0.7,
-                max_tokens=100,
+                model=self._model_id, messages=[{"role": "user", "content": prompt}], temperature=0.7, max_tokens=100
             )
             return (response.choices[0].message.content or "").strip().strip('"')
         except Exception as e:
