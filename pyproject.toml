@@ -1,24 +1,51 @@
 [project]
-name = "recipe-chatbot"
+name = "recipe"
 version = "0.1.0"
 description = "Add your description here"
-requires-python = ">=3.13"
+requires-python = ">=3.12"
 dependencies = [
     "fastapi>=0.115.14",
     "httpx>=0.28.1",
     "judgy>=0.1.0",
-    "litellm>=1.74.0",
+    # "litellm>=1.74.0",
     "matplotlib>=3.10.3",
+    "MonsterUI",
     "numpy>=2.3.1",
+    "openai",
     "pandas>=2.3.0",
     "plotly>=6.2.0",
     "pydantic>=2.11.7",
     "python-dotenv>=1.1.1",
+    "python-fasthtml",
     "rank-bm25>=0.2.2",
     "rich>=14.0.0",
     "scikit-learn>=1.7.0",
     "seaborn>=0.13.2",
     "tqdm>=4.67.1",
     "typing-extensions>=4.14.1",
+    "torch",
     "uvicorn>=0.35.0",
+    # for some reason, including this causes uv pip install -e ".[dev]"
+    # to hang. comment this out and manually install it.
+    # "vllm",
 ]
+
+[tool.uv.extra-build-dependencies]
+xformers = ["torch"]
+
+[project.optional-dependencies]
+dev = [
+    "ruff>=0.11.2",               # Linting and formatting
+    "pre-commit>=3.4",            # Pre-commit hooks
+    "recipe[test]",
+]
+test = [
+    "uv",
+    "pytest>=7.4",       # Testing
+    "pytest-cov>=4.1.0", # Test coverage
+    "pytest-xdist>=3.5", # Parallel testing
+    "tox>=4.11",         # (Testing with) A virtual environment (locally)
+]
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["recipe*"]

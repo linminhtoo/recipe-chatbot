@@ -22,9 +22,11 @@ APP_TITLE: Final[str] = "Recipe Chatbot"
 app = FastAPI(title=APP_TITLE)
 
 # Serve static assets (currently just the HTML) under `/static/*`.
-STATIC_DIR = Path(__file__).parent.parent / "frontend"
+STATIC_DIR = Path(__file__).parent / "frontend"
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
+# Directory to save request/response traces
+TRACES_DIR = Path(__file__).parent.parent.parent / "annotation" / "traces"
 
 # -----------------------------------------------------------------------------
 # Request / response models
@@ -73,10 +75,9 @@ async def chat_endpoint(payload: ChatRequest) -> ChatResponse:  # noqa: WPS430
     response = ChatResponse(messages=[ChatMessage(**msg) for msg in updated_messages_dicts])
 
     # Save trace (request and response) in one place
-    traces_dir = Path(__file__).parent.parent / "annotation" / "traces"
-    traces_dir.mkdir(parents=True, exist_ok=True)
+    TRACES_DIR.mkdir(parents=True, exist_ok=True)
     ts = datetime.datetime.now().strftime("%Y%m%d_%H%M%S_%f")
-    trace_path = traces_dir / f"trace_{ts}.json"
+    trace_path = TRACES_DIR / f"trace_{ts}.json"
     with open(trace_path, "w") as f:
         json.dump({
             "request": payload.model_dump(),
