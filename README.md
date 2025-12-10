@@ -59,7 +59,7 @@ This repository contains a complete AI evaluations course built around a Recipe 
 
 ### Key Features
 
-- **Backend**: FastAPI with LiteLLM (multi-provider LLM support)
+- **Backend**: FastAPI with a vLLM-hosted OpenAI-compatible endpoint
 - **Frontend**: Simple chat interface with conversation history
 - **Annotation Tool**: FastHTML-based interface for manual evaluation (`annotation/`)
 - **Retrieval**: BM25-based recipe search (`backend/retrieval.py`)
@@ -115,11 +115,7 @@ python scripts/evaluate_retrieval.py
 ## Environment Variables
 
 Configure your `.env` file with:
-- `MODEL_NAME`: LLM model for chatbot (e.g., `openai/gpt-5-chat-latest`, `anthropic/claude-3-sonnet-20240229`)
-- `MODEL_NAME_JUDGE`: LLM model for judge, which can be smaller than the chatbot model (e.g., `openai/gpt-5-mini`, `anthropic/claude-3-haiku-20240307`)
-- API keys: `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, etc.
-
-See [LiteLLM docs](https://docs.litellm.ai/docs/providers) for supported providers.
+- `VLLM_API_KEY` and `VLLM_API_URL`: credentials for your self-hosted vLLM API server (the code auto-detects the hosted model)
 
 ## Course Philosophy
 
