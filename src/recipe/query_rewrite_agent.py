@@ -6,50 +6,77 @@ Uses LLM to rewrite natural language queries into more effective search terms
 for BM25 retrieval, focusing on extracting key cooking terms and techniques.
 """
 
-import litellm
+import os
+import time
+from functools import lru_cache
 from typing import List, Dict
 from dotenv import load_dotenv
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from tqdm import tqdm
-import time
+
+from openai import OpenAI
 
 # Load environment variables
 load_dotenv()
 
 
+def _get_env_var(name: str) -> str:
+    value = os.environ.get(name)
+    if not value:
+        raise RuntimeError(f"{name} is not set. Update your .env to point at the vLLM server.")
+    return value
+
+
+@lru_cache(maxsize=1)
+def _get_vllm_client() -> OpenAI:
+    return OpenAI(api_key=_get_env_var("VLLM_API_KEY"), base_url=_get_env_var("VLLM_API_URL"))
+
+
+@lru_cache(maxsize=1)
+def _get_vllm_model_id() -> str:
+    models = _get_vllm_client().models.list()
+    if not models.data:
+        raise RuntimeError("No models available on the vLLM server.")
+    return models.data[0].id
+
+
 class QueryRewriteAgent:
     """LLM-powered agent for optimizing retrieval queries."""
 
-    def __init__(self, model: str = "gpt-4.1-nano", max_workers: int = 32):
-        self.model = model
+    def __init__(self, max_workers: int = 32):
         self.max_workers = max_workers
+        self._client = _get_vllm_client()
+        self._model_id = _get_vllm_model_id()
 
     def extract_search_keywords(self, query: str) -> str:
         """
         Extract the most important search keywords from a natural language query.
         """
         prompt = f"""
-You are a search optimization expert for a recipe database. Given a natural language cooking query, extract the most important keywords that would help find relevant recipes in a BM25 search.
+        You are a search optimization expert for a recipe database. Given a natural language cooking query, extract the most important keywords that would help find relevant recipes in a BM25 search.
 
-Focus on:
-1. **Cooking methods** (air fry, bake, grill, sauté, etc.)
-2. **Equipment/appliances** (air fryer, oven, pressure cooker, etc.)
-3. **Key ingredients** (chicken, vegetables, pasta, etc.)
-4. **Cooking specifics** (temperature, time, texture, etc.)
-5. **Food types** (appetizer, dessert, main dish, etc.)
+        Focus on:
+        1. **Cooking methods** (air fry, bake, grill, sauté, etc.)
+        2. **Equipment/appliances** (air fryer, oven, pressure cooker, etc.)
+        3. **Key ingredients** (chicken, vegetables, pasta, etc.)
+        4. **Cooking specifics** (temperature, time, texture, etc.)
+        5. **Food types** (appetizer, dessert, main dish, etc.)
 
-Remove filler words and focus on terms that would appear in recipe instructions or ingredients.
+        Remove filler words and focus on terms that would appear in recipe instructions or ingredients.
 
-Query: "{query}"
+        Query: "{query}"
 
-Important search keywords (space-separated):
-"""
+        Important search keywords (space-separated):
+        """
 
         try:
-            response = litellm.completion(
-                model=self.model, messages=[{"role": "user", "content": prompt}], temperature=0.2, max_tokens=100
+            response = self._client.chat.completions.create(
+                model=self._model_id,
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0.2,
+                max_tokens=100,
             )
-            keywords = response.choices[0].message.content.strip()
+            keywords = (response.choices[0].message.content or "").strip()
             return keywords
         except Exception as e:
             print(f"Error extracting keywords: {e}")
@@ -60,26 +87,29 @@ Important search keywords (space-separated):
         Rewrite a natural language query to be more effective for BM25 search.
         """
         prompt = f"""
-You are optimizing a cooking query for recipe search. Rewrite the query to be more effective for finding relevant recipes, focusing on terms that would appear in recipe titles, ingredients, and instructions.
+        You are optimizing a cooking query for recipe search. Rewrite the query to be more effective for finding relevant recipes, focusing on terms that would appear in recipe titles, ingredients, and instructions.
 
-Guidelines:
-1. Use specific cooking terms instead of vague language
-2. Include equipment names if mentioned
-3. Add related cooking techniques
-4. Use ingredient names that commonly appear in recipes
-5. Keep it concise but descriptive
-6. Remove question words (what, how, when) and focus on content
+        Guidelines:
+        1. Use specific cooking terms instead of vague language
+        2. Include equipment names if mentioned
+        3. Add related cooking techniques
+        4. Use ingredient names that commonly appear in recipes
+        5. Keep it concise but descriptive
+        6. Remove question words (what, how, when) and focus on content
 
-Original query: "{query}"
+        Original query: "{query}"
 
-Optimized search query:
-"""
+        Optimized search query:
+        """
 
         try:
-            response = litellm.completion(
-                model=self.model, messages=[{"role": "user", "content": prompt}], temperature=0.3, max_tokens=150
+            response = self._client.chat.completions.create(
+                model=self._model_id,
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0.3,
+                max_tokens=150,
             )
-            rewritten = response.choices[0].message.content.strip()
+            rewritten = (response.choices[0].message.content or "").strip()
             return rewritten
         except Exception as e:
             print(f"Error rewriting query: {e}")
@@ -90,26 +120,29 @@ Optimized search query:
         Expand a query with cooking-related synonyms and related terms.
         """
         prompt = f"""
-Expand this cooking query by adding relevant synonyms and related cooking terms that might appear in recipes. This helps catch more relevant results in recipe search.
+        Expand this cooking query by adding relevant synonyms and related cooking terms that might appear in recipes. This helps catch more relevant results in recipe search.
 
-Add terms that are:
-1. Synonyms for cooking methods mentioned
-2. Alternative ingredient names
-3. Related cooking techniques
-4. Equipment alternatives
+        Add terms that are:
+        1. Synonyms for cooking methods mentioned
+        2. Alternative ingredient names
+        3. Related cooking techniques
+        4. Equipment alternatives
 
-Keep the expansion focused and avoid unrelated terms.
+        Keep the expansion focused and avoid unrelated terms.
 
-Original: "{query}"
+        Original: "{query}"
 
-Expanded query with synonyms:
-"""
+        Expanded query with synonyms:
+        """
 
         try:
-            response = litellm.completion(
-                model=self.model, messages=[{"role": "user", "content": prompt}], temperature=0.4, max_tokens=200
+            response = self._client.chat.completions.create(
+                model=self._model_id,
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0.4,
+                max_tokens=200,
             )
-            expanded = response.choices[0].message.content.strip()
+            expanded = (response.choices[0].message.content or "").strip()
             return expanded
         except Exception as e:
             print(f"Error expanding query: {e}")

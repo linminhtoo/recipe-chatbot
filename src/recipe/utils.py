@@ -1,14 +1,11 @@
-"""Utility helpers for the recipe chatbot backend.
-
-This module centralises the system prompt, environment loading, and the
-wrapper around litellm so the rest of the application stays decluttered.
-"""
+"""Utility helpers for the recipe chatbot backend."""
 
 import os
+from functools import lru_cache
 from pathlib import Path
-from typing import Final, List, Dict
+from typing import List, Dict
 
-import litellm  # type: ignore
+from openai import OpenAI
 from dotenv import load_dotenv
 
 # Ensure the .env file is loaded as early as possible.
@@ -18,30 +15,39 @@ load_dotenv(override=False)
 
 # Load system prompt from markdown file
 _PROMPT_PATH = Path(__file__).parent / "system_prompt.md"
-SYSTEM_PROMPT: Final[str] = _PROMPT_PATH.read_text().strip()
-
-# Fetch configuration *after* we loaded the .env file.
-MODEL_NAME: Final[str] = os.environ.get("MODEL_NAME", "gpt-4o-mini")
+SYSTEM_PROMPT: str = _PROMPT_PATH.read_text().strip()
 
 
 # --- Agent wrapper ---------------------------------------------------------------
 
 
+def _get_env_var(name: str) -> str:
+    value = os.environ.get(name)
+    if not value:
+        raise RuntimeError(f"{name} is required but missing. Check your .env configuration.")
+    return value
+
+
+@lru_cache(maxsize=1)
+def _get_vllm_client() -> OpenAI:
+    """Return a cached OpenAI client configured to point at the vLLM server."""
+
+    return OpenAI(api_key=_get_env_var("VLLM_API_KEY"), base_url=_get_env_var("VLLM_API_URL"))
+
+
+@lru_cache(maxsize=1)
+def _get_vllm_model_id() -> str:
+    """Return the primary model identifier exposed by the vLLM server."""
+
+    models = _get_vllm_client().models.list()
+    if not models.data:
+        raise RuntimeError("No models available on the vLLM server.")
+    return models.data[0].id
+
+
 def get_agent_response(messages: List[Dict[str, str]]) -> List[Dict[str, str]]:  # noqa: WPS231
-    """Call the underlying large-language model via *litellm*.
+    """Call the underlying large-language model via the local vLLM server."""
 
-    Parameters
-    ----------
-    messages:
-        The full conversation history. Each item is a dict with "role" and "content".
-
-    Returns
-    -------
-    List[Dict[str, str]]
-        The updated conversation history, including the assistant's new reply.
-    """
-
-    # litellm is model-agnostic; we only need to supply the model name and key.
     # The first message is assumed to be the system prompt if not explicitly provided
     # or if the history is empty. We'll ensure the system prompt is always first.
     current_messages: List[Dict[str, str]]
@@ -50,12 +56,12 @@ def get_agent_response(messages: List[Dict[str, str]]) -> List[Dict[str, str]]: 
     else:
         current_messages = messages
 
-    completion = litellm.completion(
-        model=MODEL_NAME,
+    completion = _get_vllm_client().chat.completions.create(
+        model=_get_vllm_model_id(),
         messages=current_messages,  # Pass the full history
     )
 
-    assistant_reply_content: str = completion["choices"][0]["message"]["content"].strip()  # type: ignore[index]
+    assistant_reply_content = (completion.choices[0].message.content or "").strip()
 
     # Append assistant's response to the history
     updated_messages = current_messages + [{"role": "assistant", "content": assistant_reply_content}]
