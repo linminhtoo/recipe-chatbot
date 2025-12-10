@@ -10,10 +10,7 @@ TEMP = 0.7
 TOP_P = 0.95
 # MAX_TOK = 262144
 MAX_TOK = 100_000
-client = OpenAI(
-    api_key=openai_api_key,
-    base_url=openai_api_base,
-)
+client = OpenAI(api_key=openai_api_key, base_url=openai_api_base)
 
 models = client.models.list()
 model = models.data[0].id
@@ -33,15 +30,10 @@ def load_system_prompt(repo_id: str, filename: str) -> dict[str, Any]:
             {"type": "text", "text": system_prompt[:index_begin_think]},
             {
                 "type": "thinking",
-                "thinking": system_prompt[
-                    index_begin_think + len("[THINK]") : index_end_think
-                ],
+                "thinking": system_prompt[index_begin_think + len("[THINK]") : index_end_think],
                 "closed": True,
             },
-            {
-                "type": "text",
-                "text": system_prompt[index_end_think + len("[/THINK]") :],
-            },
+            {"type": "text", "text": system_prompt[index_end_think + len("[/THINK]") :]},
         ],
     }
 
@@ -50,17 +42,9 @@ SYSTEM_PROMPT = load_system_prompt(model, "SYSTEM_PROMPT.txt")
 
 query = "Use each number in 2,5,6,3 exactly once, along with any combination of +, -, ×, ÷ (and parentheses for grouping), to make the number 24."
 
-messages = [
-    SYSTEM_PROMPT,
-    {"role": "user", "content": query}
-]
+messages = [SYSTEM_PROMPT, {"role": "user", "content": query}]
 stream = client.chat.completions.create(
-  model=model,
-  messages=messages,
-  stream=True,
-  temperature=TEMP,
-  top_p=TOP_P,
-  max_tokens=MAX_TOK,
+    model=model, messages=messages, stream=True, temperature=TEMP, top_p=TOP_P, max_tokens=MAX_TOK
 )
 
 print("client: Start streaming chat completions...:\n")

@@ -47,7 +47,7 @@ This repository contains a complete AI evaluations course built around a Recipe 
 
 4. **HW4: RAG/Retrieval Evaluation** (`homeworks/hw4/`)
    - BM25 retrieval system with synthetic query generation
-   - **Interactive Walkthroughs**: 
+   - **Interactive Walkthroughs**:
      - `homeworks/hw4/hw4_walkthrough.py` (Marimo)
      - [video](https://youtu.be/GMShL5iC8aY): walkthrough of solution
 
@@ -55,7 +55,7 @@ This repository contains a complete AI evaluations course built around a Recipe 
    - Analyze conversation traces and failure patterns
    - **Interactive Walkthroughs**:
       - `homeworks/hw5/hw5_walkthrough.py` (Marimo)
-      - [video](https://youtu.be/z1oISsDUKLA) 
+      - [video](https://youtu.be/z1oISsDUKLA)
 
 ### Key Features
 

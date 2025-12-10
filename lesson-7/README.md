@@ -78,4 +78,4 @@ python scripts/convert_traces_to_csv.py
 # Open with Excel, Google Sheets, or any CSV viewer for inspection
 ```
 
-The resulting CSV will have 118 rows (one for each failed conversation trace) with easy-to-read conversation data for manual inspection and analysis. 
+The resulting CSV will have 118 rows (one for each failed conversation trace) with easy-to-read conversation data for manual inspection and analysis.

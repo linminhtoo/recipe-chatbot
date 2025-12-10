@@ -13,10 +13,10 @@ The purpose of homework 1 is to understand the basics of writing a system prompt
     + What should it *always* do?  Examples:
         + _Always provide ingredient lists with precise measurements using standard units._
         + _Always include clear, step-by-step instructions._
-    + What should it *never* do? Examples: 
+    + What should it *never* do? Examples:
         + _Never suggest recipes that require extremely rare or unobtainable ingredients without providing readily available alternatives._
         + _Never use offensive or derogatory language._
-    + Include a Safety Clause.  Examples: 
+    + Include a Safety Clause.  Examples:
         + _If a user asks for a recipe that is unsafe, unethical, or promotes harmful activities, politely decline and state you cannot fulfill that request, without being preachy._
 - [ ] **LLM Agency – Define its creativity level**:
     + Should it stick strictly to known recipes or invent new ones if appropriate? (Be explicit).
@@ -75,7 +75,7 @@ The purpose of homework 1 is to understand the basics of writing a system prompt
 ## Part 3: Run the Bulk Test & Evaluate
 
 **Assignment:**  Run the bulk test script:
-        
+
 ```bash
 uv run python scripts/bulk_test.py
 ```
@@ -85,5 +85,5 @@ Make sure a new JSON has been written to the `results` directory.  Feel free to 
 `Please review <filename such as results/results_20251112_104916.json> and create a self contained html file that lets me view the different queries and responses ergonomically.  Keep it simple, but effective`
 
 You can then open that html file using any browser you'd like.
-    
+
 Good luck!

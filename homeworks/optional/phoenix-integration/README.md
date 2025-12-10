@@ -72,14 +72,14 @@ function generateSessionId() {
 
 async function sendMessage(evt) {
     // ... existing code ...
-    
+
     // In the fetch to the backend `/chat` route, send session ID in addition to `chatHistory`
 
     const res = await fetch("/chat", {
             // TODO: Ensure session ID is included in the body
         }),
-    
-        
+
+
         const data = await res.json();
         chatHistory = data.messages;
         // TODO: set session ID from server response similar to how `ChatHistory` is set
@@ -110,13 +110,13 @@ def setup_local_phoenix_tracing():
     # For this assignment you do not need that
     phoenix_endpoint = "http://0.0.0.0:6006"
     os.environ["PHOENIX_COLLECTOR_ENDPOINT"] = phoenix_endpoint
-    os.environ["PHOENIX_ENDPOINT"] = phoenix_endpoint    
+    os.environ["PHOENIX_ENDPOINT"] = phoenix_endpoint
     print(f"Using local Phoenix endpoint: {phoenix_endpoint}")
-    
+
     # TODO: Instrument LiteLLM before registering Phoenix
-    
+
     # TODO: Configure the Phoenix tracer with project name
-    
+
     print("Phoenix tracing initialized successfully")
     # TODO: Return tracer for use in application
 ```
@@ -145,7 +145,7 @@ async def chat_endpoint(payload: ChatRequest) -> ChatResponse:
     """Main conversational endpoint with Phoenix tracing."""
     # TODO: Get session ID from the payload or create a random one if there isn't one
     session_id = payload.session_id or str(uuid.uuid4())
-    
+
     # ... existing code
 
     try:
@@ -153,9 +153,9 @@ async def chat_endpoint(payload: ChatRequest) -> ChatResponse:
         # TODO: Set session ID and input/output attributes on the span
         # TODO: Use session context to propagate session ID to child spans
         # TODO: Call get_agent_response within the tracing and using session context
-        
+
         updated_messages_dicts = get_agent_response(request_messages)
-        
+
     except Exception as exc:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

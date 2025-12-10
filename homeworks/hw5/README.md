@@ -49,13 +49,13 @@ Every trace succeeds through `last_success_state` and then fails at
 
 ---
 ## What you need to do
-1. **Inspect the data**  
+1. **Inspect the data**
    Familiarize yourself with the JSON structure and the above state list.
 
-2. **Build the transition matrix**  
+2. **Build the transition matrix**
    Count how many times each `(last_success → first_failure)` pair appears.
 
-3. **Visualize**  
+3. **Visualize**
    Render a heat-map where rows = last-success, columns = first-failure.
    A starter script is provided:
    ```bash
@@ -64,13 +64,13 @@ Every trace succeeds through `last_success_state` and then fails at
    ```
    This writes `results/failure_transition_heatmap.png`.
 
-4. **Analyze**  
-   • Which states fail most often?  
-   • Do failures cluster around tool execution or argument generation?  
+4. **Analyze**
+   • Which states fail most often?
+   • Do failures cluster around tool execution or argument generation?
    • Any surprising low-frequency transitions?
 
-5. **Deliverables**  
-   • Heat-map PNG (commit to `homeworks/hw5/results/`).  
+5. **Deliverables**
+   • Heat-map PNG (commit to `homeworks/hw5/results/`).
    • Short write-up (README or a separate markdown file) summarising your
      findings.
 

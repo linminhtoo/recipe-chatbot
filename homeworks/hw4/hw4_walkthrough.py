@@ -19,29 +19,13 @@ def _():
     import plotly.graph_objects as go
     import plotly.express as px
     from IPython.display import Markdown, display
-    return (
-        Dict,
-        List,
-        Markdown,
-        Path,
-        Tuple,
-        display,
-        go,
-        json,
-        mo,
-        np,
-        os,
-        pd,
-        plt,
-        px,
-        sns,
-        sys,
-    )
+
+    return (Dict, List, Markdown, Path, Tuple, display, go, json, mo, np, os, pd, plt, px, sns, sys)
 
 
 @app.cell
 def _(Path):
-    BASE_PATH = Path('homeworks/hw4')
+    BASE_PATH = Path("homeworks/hw4")
     return (BASE_PATH,)
 
 
@@ -106,7 +90,7 @@ def _(mo):
 
 @app.cell
 def _(BASE_PATH, pd):
-    pd.read_csv(BASE_PATH/'data'/'RAW_recipes.csv')
+    pd.read_csv(BASE_PATH / "data" / "RAW_recipes.csv")
     return
 
 
@@ -140,20 +124,14 @@ def _(mo):
 @app.cell
 def _(BASE_PATH, json):
     # Load processed recipes
-    recipes = json.load(open(BASE_PATH/'data'/'processed_recipes.json', 'r'))
+    recipes = json.load(open(BASE_PATH / "data" / "processed_recipes.json", "r"))
     return (recipes,)
 
 
 @app.cell
 def _(mo, recipes):
     # Create recipe browser widget
-    recipe_index = mo.ui.slider(
-        start=0, 
-        stop=len(recipes)-1, 
-        value=0, 
-        label="Recipe Index",
-        show_value=True
-    )
+    recipe_index = mo.ui.slider(start=0, stop=len(recipes) - 1, value=0, label="Recipe Index", show_value=True)
 
     mo.md(f"""
     #### Interactive Recipe Browser
@@ -169,31 +147,31 @@ def _(mo, recipe_index, recipes):
     selected_recipe = recipes[recipe_index.value]
 
     mo.md(f"""
-    **Recipe: {selected_recipe['name']}**
+    **Recipe: {selected_recipe["name"]}**
 
-    - **ID**: {selected_recipe['id']}
-    - **Cooking Time**: {selected_recipe['minutes']} minutes
-    - **Number of Steps**: {selected_recipe['n_steps']}
-    - **Number of Ingredients**: {selected_recipe['n_ingredients']}
+    - **ID**: {selected_recipe["id"]}
+    - **Cooking Time**: {selected_recipe["minutes"]} minutes
+    - **Number of Steps**: {selected_recipe["n_steps"]}
+    - **Number of Ingredients**: {selected_recipe["n_ingredients"]}
 
     <details>
     <summary><b>Ingredients</b></summary>
 
-    {'<br>'.join(f"- {ing}" for ing in selected_recipe['ingredients'])}
+    {"<br>".join(f"- {ing}" for ing in selected_recipe["ingredients"])}
 
     </details>
 
     <details>
     <summary><b>Instructions</b></summary>
 
-    {'<br>'.join(f"{i+1}. {step}" for i, step in enumerate(selected_recipe['steps']))}
+    {"<br>".join(f"{i + 1}. {step}" for i, step in enumerate(selected_recipe["steps"]))}
 
     </details>
 
     <details>
     <summary><b>Tags</b></summary>
 
-    {', '.join(selected_recipe['tags']) if selected_recipe['tags'] else 'No tags'}
+    {", ".join(selected_recipe["tags"]) if selected_recipe["tags"] else "No tags"}
 
     </details>
     """)
@@ -245,7 +223,7 @@ def _(mo):
         Analyze this recipe and identify 1-2 specific, technical details that would be difficult to generate from scratch but are clearly answerable by this exact recipe. Focus on:
 
         1. **Specific cooking techniques/methods** (e.g., "marinate for 4 hours", "bake at 375°F for exactly 25 minutes")
-        2. **Appliance settings** (e.g., "air fryer at 400°F for 12 minutes", "pressure cook for 8 minutes")  
+        2. **Appliance settings** (e.g., "air fryer at 400°F for 12 minutes", "pressure cook for 8 minutes")
         3. **Ingredient preparation details** (e.g., "slice onions paper-thin", "whip cream to soft peaks")
         4. **Timing specifics** (e.g., "rest dough for 30 minutes", "simmer for 45 minutes")
         5. **Temperature precision** (e.g., "internal temp 165°F", "oil heated to 350°F")
@@ -304,8 +282,8 @@ def _(mo):
 
 @app.cell
 def _(BASE_PATH, json, recipes):
-    synthetic_queries = json.load(open(BASE_PATH/'data'/'synthetic_queries.json', 'r'))
-    recipe_lookup = {r['id']: r for r in recipes}
+    synthetic_queries = json.load(open(BASE_PATH / "data" / "synthetic_queries.json", "r"))
+    recipe_lookup = {r["id"]: r for r in recipes}
     return recipe_lookup, synthetic_queries
 
 
@@ -313,11 +291,7 @@ def _(BASE_PATH, json, recipes):
 def _(mo, synthetic_queries):
     # Create query selector
     query_selector = mo.ui.slider(
-        start=0,
-        stop=len(synthetic_queries)-1,
-        value=0,
-        label="Query Index",
-        show_value=True
+        start=0, stop=len(synthetic_queries) - 1, value=0, label="Query Index", show_value=True
     )
 
     mo.md(f"""
@@ -332,33 +306,33 @@ def _(mo, synthetic_queries):
 def _(mo, query_selector, recipe_lookup, synthetic_queries):
     # Display selected query
     selected = synthetic_queries[query_selector.value]
-    source_recipe = recipe_lookup.get(selected['source_recipe_id'])
+    source_recipe = recipe_lookup.get(selected["source_recipe_id"])
 
     mo.md(f"""
     #### Query #{query_selector.value + 1}
 
     **🔍 Query Text:**
-    > {selected['query']}
+    > {selected["query"]}
 
-    **🎯 Target Recipe:** {selected['source_recipe_name']} (ID: {selected['source_recipe_id']})
+    **🎯 Target Recipe:** {selected["source_recipe_name"]} (ID: {selected["source_recipe_id"]})
 
-    **⏱️ Cooking Time:** {selected['cooking_time']} minutes
+    **⏱️ Cooking Time:** {selected["cooking_time"]} minutes
 
     <br>**💡 Key Facts This Query Tests:**<br>
 
-    {selected['salient_fact']}
+    {selected["salient_fact"]}
 
-    **🏷️ Recipe Tags:** {', '.join(selected['tags'][:10])}{'...' if len(selected['tags']) > 10 else ''}
+    **🏷️ Recipe Tags:** {", ".join(selected["tags"][:10])}{"..." if len(selected["tags"]) > 10 else ""}
 
     <details>
     <summary><b>📝 Full Recipe Details</b></summary>
 
-    **Ingredients ({len(selected['ingredients'])}):**<br>
-    {'<br>'.join(f"- {ing}" for ing in selected['ingredients'])}
+    **Ingredients ({len(selected["ingredients"])}):**<br>
+    {"<br>".join(f"- {ing}" for ing in selected["ingredients"])}
 
-    <br>**Steps ({source_recipe['n_steps'] if source_recipe else 'N/A'}):**<br>
-    {'<br>'.join(f"{i+1}. {step}" for i, step in enumerate(source_recipe['steps']))}
-    {'<br>...' if source_recipe and len(source_recipe['steps']) > 5 else ''}
+    <br>**Steps ({source_recipe["n_steps"] if source_recipe else "N/A"}):**<br>
+    {"<br>".join(f"{i + 1}. {step}" for i, step in enumerate(source_recipe["steps"]))}
+    {"<br>..." if source_recipe and len(source_recipe["steps"]) > 5 else ""}
 
     </details>
     """)
@@ -466,22 +440,22 @@ def _(mo):
 
 @app.cell
 def _(BASE_PATH, json):
-    eval_results = json.load(open(BASE_PATH/'results'/'retrieval_evaluation.json', 'r'))
+    eval_results = json.load(open(BASE_PATH / "results" / "retrieval_evaluation.json", "r"))
     eval_results
     return (eval_results,)
 
 
 @app.cell
 def _(eval_results, mo):
-    metrics = eval_results['evaluation_summary']
+    metrics = eval_results["evaluation_summary"]
 
     mo.md(f"""
     #### Retrieval Performance Results
 
-    - **Recall@1**: {metrics['recall_at_1']:.3f} ({metrics['recall_at_1']*100:.1f}%)
-    - **Recall@3**: {metrics['recall_at_3']:.3f} ({metrics['recall_at_3']*100:.1f}%)
-    - **Recall@5**: {metrics['recall_at_5']:.3f} ({metrics['recall_at_5']*100:.1f}%)
-    - **MRR**: {metrics['mrr']:.3f}
+    - **Recall@1**: {metrics["recall_at_1"]:.3f} ({metrics["recall_at_1"] * 100:.1f}%)
+    - **Recall@3**: {metrics["recall_at_3"]:.3f} ({metrics["recall_at_3"] * 100:.1f}%)
+    - **Recall@5**: {metrics["recall_at_5"]:.3f} ({metrics["recall_at_5"] * 100:.1f}%)
+    - **MRR**: {metrics["mrr"]:.3f}
     """)
     return (metrics,)
 
@@ -490,11 +464,7 @@ def _(eval_results, mo):
 def _(mo, synthetic_queries):
     # Create query selector
     query_selector2 = mo.ui.slider(
-        start=0,
-        stop=len(synthetic_queries)-1,
-        value=0,
-        label="Query Index",
-        show_value=True
+        start=0, stop=len(synthetic_queries) - 1, value=0, label="Query Index", show_value=True
     )
 
     mo.md(f"""
@@ -508,20 +478,20 @@ def _(mo, synthetic_queries):
 @app.cell
 def _(eval_results, mo, query_selector2):
     # Display selected query
-    selected2 = eval_results['detailed_results'][query_selector2.value]
+    selected2 = eval_results["detailed_results"][query_selector2.value]
 
     mo.md(f"""
     **🔍 Query Text:**
-    > {selected2['original_query']}
+    > {selected2["original_query"]}
 
-    {selected2['salient_fact']}
+    {selected2["salient_fact"]}
 
-    **🎯 Target Recipe:** {selected2['target_recipe_name']} (ID: {selected2['target_recipe_id']})
+    **🎯 Target Recipe:** {selected2["target_recipe_name"]} (ID: {selected2["target_recipe_id"]})
 
 
-    **🎯 Retrieved Recipes:** 
+    **🎯 Retrieved Recipes:**
 
-    {'<br>'.join(selected2['retrieved_names'])}
+    {"<br>".join(selected2["retrieved_names"])}
 
 
     """)
@@ -651,21 +621,22 @@ def _(mo):
 
 @app.cell
 def _(BASE_PATH, json):
-    rewrite_results = json.load(open(BASE_PATH/'results'/'retrieval_comparison.json', 'r'))
+    rewrite_results = json.load(open(BASE_PATH / "results" / "retrieval_comparison.json", "r"))
     rewrite_results
     return (rewrite_results,)
 
 
 @app.cell
 def _(pd, rewrite_results):
-    pd.DataFrame(rewrite_results['strategy_comparison'])
+    pd.DataFrame(rewrite_results["strategy_comparison"])
     return
 
 
 @app.cell
 def _(sys):
-    sys.path.append('backend')
+    sys.path.append("backend")
     from query_rewrite_agent import QueryRewriteAgent
+
     return (QueryRewriteAgent,)
 
 

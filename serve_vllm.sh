@@ -13,4 +13,3 @@ vllm serve mistralai/Ministral-3-14B-Reasoning-2512 \
   --host 0.0.0.0 \
   --port 8989 \
   --api-key test
-

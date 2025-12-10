@@ -1,25 +1,23 @@
 import marimo
 
 __generated_with = "0.14.10"
-app = marimo.App(
-    width="medium",
-    layout_file="layouts/hw5_walkthrough.grid.json",
-)
+app = marimo.App(width="medium", layout_file="layouts/hw5_walkthrough.grid.json")
 
 
 @app.cell
 def _():
     import marimo as mo
-    import json, os
+    import json
     from pathlib import Path
     from collections import Counter
     import pandas as pd
+
     return Counter, Path, json, mo, pd
 
 
 @app.cell
 def _(Path):
-    BASE_PATH = Path('homeworks/hw5/')
+    BASE_PATH = Path("homeworks/hw5/")
     return (BASE_PATH,)
 
 
@@ -43,7 +41,7 @@ def _(mo):
 
 @app.cell
 def _(BASE_PATH, json):
-    labeled_traces = json.load(open(BASE_PATH/'data'/'labeled_traces.json', 'r'))
+    labeled_traces = json.load(open(BASE_PATH / "data" / "labeled_traces.json", "r"))
     type(labeled_traces), len(labeled_traces)
     return (labeled_traces,)
 
@@ -71,13 +69,7 @@ def _(labeled_traces):
 
 @app.cell
 def _(labeled_traces, mo):
-    trace_index_slider = mo.ui.slider(
-        start=0,
-        stop=len(labeled_traces) - 1,
-        step=1,
-        value=0,
-        label="Trace Index"
-    )
+    trace_index_slider = mo.ui.slider(start=0, stop=len(labeled_traces) - 1, step=1, value=0, label="Trace Index")
     trace_index_slider
     return (trace_index_slider,)
 
@@ -85,9 +77,11 @@ def _(labeled_traces, mo):
 @app.cell
 def _():
     import re
+
     def camel_to_regular(camel_string):
-      s = re.sub(r'(?<!^)(?=[A-Z])', ' ', camel_string)
-      return s.lower().title()
+        s = re.sub(r"(?<!^)(?=[A-Z])", " ", camel_string)
+        return s.lower().title()
+
     return (camel_to_regular,)
 
 
@@ -99,30 +93,32 @@ def _(camel_to_regular, labeled_traces, mo, trace_index_slider):
     message_elements = []
 
     # Add the header information
-    message_elements.append(mo.md(f"""
-    ID: {_trace['conversation_id']}
+    message_elements.append(
+        mo.md(f"""
+    ID: {_trace["conversation_id"]}
 
-    **Failure Transition:** {camel_to_regular(_trace['last_success_state'])} -> {camel_to_regular(_trace['first_failure_state'])}
+    **Failure Transition:** {camel_to_regular(_trace["last_success_state"])} -> {camel_to_regular(_trace["first_failure_state"])}
 
     **Messages**
-    """))
+    """)
+    )
 
     # Add each message with role-based styling
-    if 'messages' in _trace:
-        for msg in _trace['messages']:
-            role = msg.get('role', 'unknown')
-            content = msg.get('content', '')
+    if "messages" in _trace:
+        for msg in _trace["messages"]:
+            role = msg.get("role", "unknown")
+            content = msg.get("content", "")
 
             # Create a styled container for each message
-            if role == 'user':
-                bg_color = '#e3f2fd'
-                role_color = '#1976d2'
-            elif role == 'assistant':
-                bg_color = '#f3e5f5'
-                role_color = '#7b1fa2'
+            if role == "user":
+                bg_color = "#e3f2fd"
+                role_color = "#1976d2"
+            elif role == "assistant":
+                bg_color = "#f3e5f5"
+                role_color = "#7b1fa2"
             else:
-                bg_color = '#f5f5f5'
-                role_color = '#616161'
+                bg_color = "#f5f5f5"
+                role_color = "#616161"
 
             message_elements.append(
                 mo.Html(f"""
@@ -150,16 +146,16 @@ def _(mo):
 
 @app.cell
 def _(labeled_traces):
-    transition_tuples = [(t['last_success_state'], t['first_failure_state']) for t in labeled_traces]
+    transition_tuples = [(t["last_success_state"], t["first_failure_state"]) for t in labeled_traces]
     return (transition_tuples,)
 
 
 @app.cell
 def _(pd, transition_tuples):
     # Create transition matrix
-    transition_matrix = pd.DataFrame(index=sorted(set(t[0] for t in transition_tuples)), 
-                                     columns=sorted(set(t[1] for t in transition_tuples)), 
-                                     data=0)
+    transition_matrix = pd.DataFrame(
+        index=sorted(set(t[0] for t in transition_tuples)), columns=sorted(set(t[1] for t in transition_tuples)), data=0
+    )
     transition_matrix
     return (transition_matrix,)
 
@@ -192,15 +188,10 @@ def _(transition_matrix):
     import seaborn as sns
 
     plt.figure(figsize=(10, 8))
-    sns.heatmap(transition_matrix, 
-                annot=True, 
-                fmt='g', 
-                cmap='YlOrRd',
-                cbar_kws={'label': 'Count'},
-                square=True)
-    plt.title('State Transition Matrix Heatmap')
-    plt.xlabel('First Failure State')
-    plt.ylabel('Last Success State')
+    sns.heatmap(transition_matrix, annot=True, fmt="g", cmap="YlOrRd", cbar_kws={"label": "Count"}, square=True)
+    plt.title("State Transition Matrix Heatmap")
+    plt.xlabel("First Failure State")
+    plt.ylabel("Last Success State")
     plt.tight_layout()
     plt.gca()
     return plt, sns
@@ -246,34 +237,29 @@ def _(mo):
 
 @app.cell
 def _(Counter, transition_tuples):
-    Counter([o[0] for o in transition_tuples]),Counter([o[1] for o in transition_tuples])
+    Counter([o[0] for o in transition_tuples]), Counter([o[1] for o in transition_tuples])
     return
 
 
 @app.cell
 def _(Counter, labeled_traces, pd, plt, sns):
-    transition_tuples_start = [(t['last_success_state'][:3], t['first_failure_state'][:3]) for t in labeled_traces]
+    transition_tuples_start = [(t["last_success_state"][:3], t["first_failure_state"][:3]) for t in labeled_traces]
 
-    transition_matrix_start = pd.DataFrame(index=sorted(set(t[0] for t in transition_tuples_start)), 
-                                     columns=sorted(set(t[1] for t in transition_tuples_start)), 
-                                     data=0)
-
+    transition_matrix_start = pd.DataFrame(
+        index=sorted(set(t[0] for t in transition_tuples_start)),
+        columns=sorted(set(t[1] for t in transition_tuples_start)),
+        data=0,
+    )
 
     counter_start = Counter(transition_tuples_start)
     for (last_state_start, first_failure_start), count_start in counter_start.items():
         transition_matrix_start.loc[last_state_start, first_failure_start] = count_start
 
-
     plt.figure(figsize=(10, 8))
-    sns.heatmap(transition_matrix_start, 
-                annot=True, 
-                fmt='g', 
-                cmap='YlOrRd',
-                cbar_kws={'label': 'Count'},
-                square=True)
-    plt.title('State Transition Matrix Heatmap')
-    plt.xlabel('First Failure State')
-    plt.ylabel('Last Success State')
+    sns.heatmap(transition_matrix_start, annot=True, fmt="g", cmap="YlOrRd", cbar_kws={"label": "Count"}, square=True)
+    plt.title("State Transition Matrix Heatmap")
+    plt.xlabel("First Failure State")
+    plt.ylabel("Last Success State")
     plt.tight_layout()
     plt.gca()
 

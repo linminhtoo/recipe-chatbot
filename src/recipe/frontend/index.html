@@ -66,21 +66,21 @@
         color: #343a40; /* Darker gray text */
         border: none; /* Remove default border */
       }
-      
+
       /* Styling for markdown elements inside assistant messages */
       .assistant p { margin: 0.5em 0; }
       .assistant ul, .assistant ol { margin: 0.5em 0 0.5em 20px; padding: 0; }
       .assistant li { margin-bottom: 0.25em; }
-      .assistant pre { 
-        background-color: #e9ecef; 
-        padding: 10px; 
-        border-radius: 6px; 
-        overflow-x: auto; 
+      .assistant pre {
+        background-color: #e9ecef;
+        padding: 10px;
+        border-radius: 6px;
+        overflow-x: auto;
         font-size: 0.9em;
       }
-      .assistant code { 
+      .assistant code {
         font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
-        font-size: 0.9em; 
+        font-size: 0.9em;
         background-color: rgba(0,0,0,0.04);
         padding: 2px 4px;
         border-radius: 4px;
@@ -92,12 +92,12 @@
       }
 
       #typing-indicator {
-        box-sizing: border-box; 
-        display: none; 
+        box-sizing: border-box;
+        display: none;
         color: #6c757d; /* Subtler gray for typing */
         font-style: italic;
         padding: 10px 15px; /* Match message padding */
-        margin-bottom: 8px; 
+        margin-bottom: 8px;
         border-radius: 18px; /* Match message radius */
         background-color: #f1f3f5; /* Match assistant background */
         align-self: flex-start; /* Ensure it aligns like an assistant message */
@@ -188,7 +188,7 @@
 
           const bubble = document.createElement("div");
           bubble.classList.add("message", msg.role);
-          
+
           if (msg.role === "assistant") {
             bubble.innerHTML = marked.parse(msg.content || ""); // Use marked.parse for assistant
           } else {
@@ -211,7 +211,7 @@
         input.value = "";
         input.focus();
         sendBtn.disabled = true;
-        
+
         typingIndicator.style.display = "block";
         let dotCount = 0;
         typingIndicator.textContent = "Assistant is typing"; // Initial text without dots
@@ -242,7 +242,7 @@
         } catch (error) {
           // Add error message to history and re-render
           chatHistory.push({
-            role: "assistant", 
+            role: "assistant",
             content: `Oops! Something went wrong: ${error.message}. Please try again.`
             // Error message will also be parsed by marked in renderChat
           });
@@ -261,4 +261,4 @@
       renderChat();
     </script>
   </body>
-</html> 
+</html>

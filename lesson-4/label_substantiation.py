@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 """Generate ground-truth labels for the *unsupported / unsubstantiated information*
 failure mode in NurtureBoss conversations.
 
@@ -23,18 +21,21 @@ from pathlib import Path
 import hashlib
 import json
 import os
-import sys
 from collections import Counter
 from typing import List, Dict, Any
 
 import litellm  # type: ignore
 from concurrent.futures import ThreadPoolExecutor, as_completed
+
 # tqdm is optional – fall back to identity iterator if missing
 try:
     from tqdm import tqdm
 except ModuleNotFoundError:  # pragma: no cover
+
     def tqdm(iterable, **kwargs):  # type: ignore
         return iterable
+
+
 from pydantic import BaseModel
 from dotenv import load_dotenv
 
@@ -66,6 +67,7 @@ class SubstantiationResult(BaseModel):
 # Helper utilities
 # ---------------------------------------------------------------------------
 
+
 def stable_hash(text: str, length: int = 8) -> str:
     """Return a short, deterministic hash of *text* for caching keys."""
     return hashlib.sha256(text.encode()).hexdigest()[:length]
@@ -93,8 +95,8 @@ The ***Tool / Metadata*** section presents either (1) direct outputs returned by
 
 Evaluation rubric
 PASS ⇒ Every assistant statement is supported by at least one of:
-    • Information already provided by the user,  
-    • The Tool / Metadata section, **or**  
+    • Information already provided by the user,
+    • The Tool / Metadata section, **or**
     • A tool that could be called using arguments directly derivable from the conversation.
 FAIL ⇒ At least one assistant statement lacks such support.
 
@@ -122,6 +124,7 @@ Return ONLY JSON with the two keys shown above – no additional text.
 # ---------------------------------------------------------------------------
 # Main labeling routine
 # ---------------------------------------------------------------------------
+
 
 def main() -> None:
     with DATA_PATH.open() as fp:
@@ -165,11 +168,11 @@ def main() -> None:
         print(f"Wrote {updated} new labels → {OUTPUT_PATH}")
     else:
         print("Nothing to label.")
-        
+
     # Print distribution of labels
     labels = [r["all_responses_substantiated"] for r in records]
     print(f"Label distribution: {Counter(labels)}")
 
 
 if __name__ == "__main__":
-    main() 
+    main()

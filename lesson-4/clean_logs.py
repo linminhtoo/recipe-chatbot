@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 """Utility script to convert the `lesson-4/nurtureboss_logs.csv` file into a
 flattened conversation traces dataset compatible with the *traces.json* format
 used elsewhere in the repository.

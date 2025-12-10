@@ -46,7 +46,7 @@ document.addEventListener('DOMContentLoaded', () => {
         query.className = 'message';
         query.innerHTML = `<div class="sender">USER QUERY</div><div>${trace.user_query}</div>`;
         traceView.appendChild(query);
-        
+
         const conversationMessages = trace.conversation_messages.split('|').map(s => s.trim());
         conversationMessages.forEach(msg => {
             const msgDiv = document.createElement('div');
@@ -70,7 +70,7 @@ document.addEventListener('DOMContentLoaded', () => {
             toolDiv.innerHTML = `<div class="sender">TOOL CALLS</div><code>${trace.tool_calls}</code>`;
             traceView.appendChild(toolDiv);
         }
-        
+
         // Restore saved label if exists
         const savedLabel = labeledData[trace.trace_id];
         if (savedLabel) {
@@ -93,7 +93,7 @@ document.addEventListener('DOMContentLoaded', () => {
         progressText.textContent = `${labeledCount}/${totalCount}`;
         progressBar.style.width = totalCount > 0 ? `${(labeledCount / totalCount) * 100}%` : '0%';
     }
-    
+
     async function saveCurrentLabel() {
         if (traces.length === 0) return;
         const trace = traces[currentTraceIndex];

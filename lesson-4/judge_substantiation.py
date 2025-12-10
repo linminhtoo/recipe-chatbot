@@ -26,8 +26,10 @@ from pydantic import BaseModel
 try:
     from tqdm import tqdm
 except ModuleNotFoundError:  # pragma: no cover
+
     def tqdm(iterable, **kwargs):  # type: ignore
         return iterable
+
 
 load_dotenv()
 
@@ -54,7 +56,7 @@ class JudgeResult(BaseModel):
 
 # ---------------------------------------------------------------------------
 # Utilities
-    # ---------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
 
 
 def split_dataset(records: List[Dict[str, Any]]) -> Dict[str, List[Dict[str, Any]]]:
@@ -70,12 +72,15 @@ def split_dataset(records: List[Dict[str, Any]]) -> Dict[str, List[Dict[str, Any
 
 # Few-shot examples injected later
 
+
 def _format_conv_short(rec: Dict[str, Any]) -> str:
     lines = [f"{m['role'].upper()}: {m['content']}" for m in rec.get("messages", [])]
     return "\n".join(lines)
 
 
-def build_judge_prompt(messages: List[Dict[str, str]], metadata: Dict[str, Any] | None, *, example_pass: str, example_fail: str) -> str:
+def build_judge_prompt(
+    messages: List[Dict[str, str]], metadata: Dict[str, Any] | None, *, example_pass: str, example_fail: str
+) -> str:
     lines = [f"{m['role'].upper()}: {m['content']}" for m in messages]
     conv_block = "\n".join(lines)
     metadata_block = json.dumps(metadata, indent=2, ensure_ascii=False) if metadata else "<no metadata>"
@@ -83,7 +88,7 @@ def build_judge_prompt(messages: List[Dict[str, str]], metadata: Dict[str, Any] 
     prompt = f"""
 You are a quality-control judge for AI leasing assistants.
 
-Failure mode to detect: *Unsupported or unsubstantiated information* – any time the assistant states a 
+Failure mode to detect: *Unsupported or unsubstantiated information* – any time the assistant states a
 fact that cannot be verified by the provided tool outputs, prior messages, or metadata.
 
 Decision rules (apply in order):
@@ -123,6 +128,7 @@ Return ONLY JSON with the two keys shown above – no additional text.
 # Metric helpers
 # ---------------------------------------------------------------------------
 
+
 def compute_tpr_tnr(y_true: List[bool], y_pred: List[bool]):
     tn, fp, fn, tp = confusion_matrix(y_true, y_pred, labels=[False, True]).ravel()
     tpr = tp / (tp + fn) if (tp + fn) else 0.0
@@ -133,6 +139,7 @@ def compute_tpr_tnr(y_true: List[bool], y_pred: List[bool]):
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
+
 
 def main() -> None:
     if "OPENAI_API_KEY" not in os.environ:
@@ -160,7 +167,11 @@ def main() -> None:
         def evaluate(rec: Dict[str, Any]) -> bool:
             prompt = build_judge_prompt(
                 rec.get("messages", []),
-                {k: v for k, v in rec.items() if k not in {"messages", "id", "z_note", "all_responses_substantiated", "substantiation_rationale"}},
+                {
+                    k: v
+                    for k, v in rec.items()
+                    if k not in {"messages", "id", "z_note", "all_responses_substantiated", "substantiation_rationale"}
+                },
                 example_pass=example_pass_combined,
                 example_fail=example_fail_combined,
             )
@@ -189,17 +200,16 @@ def main() -> None:
         # Surface false positives for analysis (predicted Pass but ground Fail)
         # -------------------------------------------------------------------
         false_positives = [
-            rec for rec, pred_flag in zip(split_recs, y_pred)
-            if pred_flag and not rec["all_responses_substantiated"]
+            rec for rec, pred_flag in zip(split_recs, y_pred) if pred_flag and not rec["all_responses_substantiated"]
         ]
 
         if false_positives:
             print(f"--- FALSE POSITIVES ({len(false_positives)}) in {split_name} ---")
             for fp in false_positives:
                 print(f"ID: {fp['id']}")
-                rationale = fp.get('substantiation_rationale', '<no rationale>')
+                rationale = fp.get("substantiation_rationale", "<no rationale>")
                 print(f"Rationale: {rationale}\n")
 
 
 if __name__ == "__main__":
-    main() 
+    main()

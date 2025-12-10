@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 """FastAPI application entry-point for the recipe chatbot."""
 
 from pathlib import Path
@@ -12,7 +10,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-from backend.utils import get_agent_response  # noqa: WPS433 import from parent
+from recipe.utils import get_agent_response  # noqa: WPS433 import from parent
 
 # -----------------------------------------------------------------------------
 # Application setup
@@ -32,10 +30,13 @@ TRACES_DIR = Path(__file__).parent.parent.parent / "annotation" / "traces"
 # Request / response models
 # -----------------------------------------------------------------------------
 
+
 class ChatMessage(BaseModel):
     """Schema for a single message in the chat history."""
+
     role: str = Field(..., description="Role of the message sender (system, user, or assistant).")
     content: str = Field(..., description="Content of the message.")
+
 
 class ChatRequest(BaseModel):
     """Schema for incoming chat messages."""
@@ -67,10 +68,7 @@ async def chat_endpoint(payload: ChatRequest) -> ChatResponse:  # noqa: WPS430
         updated_messages_dicts = get_agent_response(request_messages)
     except Exception as exc:  # noqa: BLE001 broad; surface as HTTP 500
         # In production you would log the traceback here.
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(exc),
-        ) from exc
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc)) from exc
 
     response = ChatResponse(messages=[ChatMessage(**msg) for msg in updated_messages_dicts])
 
@@ -79,10 +77,7 @@ async def chat_endpoint(payload: ChatRequest) -> ChatResponse:  # noqa: WPS430
     ts = datetime.datetime.now().strftime("%Y%m%d_%H%M%S_%f")
     trace_path = TRACES_DIR / f"trace_{ts}.json"
     with open(trace_path, "w") as f:
-        json.dump({
-            "request": payload.model_dump(),
-            "response": response.model_dump()
-        }, f)
+        json.dump({"request": payload.model_dump(), "response": response.model_dump()}, f)
 
     return response
 
@@ -94,8 +89,7 @@ async def index() -> HTMLResponse:  # noqa: WPS430
     html_path = STATIC_DIR / "index.html"
     if not html_path.exists():
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Frontend not found. Did you forget to build it?",
+            status_code=status.HTTP_404_NOT_FOUND, detail="Frontend not found. Did you forget to build it?"
         )
 
-    return HTMLResponse(html_path.read_text(encoding="utf-8")) 
+    return HTMLResponse(html_path.read_text(encoding="utf-8"))

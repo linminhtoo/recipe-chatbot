@@ -43,4 +43,4 @@ Reproducibility
 ---------------
 * Use `--seed` to make the sampling deterministic.
 * Setting a seed does **not** remove all randomness in GPT outputs, but it does
-  keep the failure distribution identical across runs. 
+  keep the failure distribution identical across runs.

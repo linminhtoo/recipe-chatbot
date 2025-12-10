@@ -35,7 +35,7 @@ Create `scripts/process_recipes.py`:
 - Select the ~200 longest recipes by text content for richer evaluation
 - Save as `data/processed_recipes.json`
 
-#### Step 2: Build BM25 Retrieval Engine  
+#### Step 2: Build BM25 Retrieval Engine
 Create `backend/retrieval.py`:
 - Implement BM25-based recipe search using `rank_bm25`
 - Support index saving/loading for efficiency
@@ -58,7 +58,7 @@ Create `scripts/evaluate_retrieval.py`:
 - For each query, run `retrieve_bm25()` and record results
 - Calculate standard IR metrics:
   - **Recall@1**: Target recipe rank 1
-  - **Recall@3**: Target recipe in top 3  
+  - **Recall@3**: Target recipe in top 3
   - **Recall@5**: Target recipe in top 5
   - **MRR**: Mean Reciprocal Rank
 - Save detailed results to `results/retrieval_evaluation.json`
@@ -107,7 +107,7 @@ python scripts/evaluate_retrieval.py
 homeworks/hw4/
 ├── scripts/
 │   ├── process_recipes.py          # Recipe data processing
-│   ├── generate_queries.py         # Synthetic query generation  
+│   ├── generate_queries.py         # Synthetic query generation
 │   ├── review_queries.py           # Manual query review (optional)
 │   └── evaluate_retrieval.py       # Retrieval evaluation
 ├── data/
@@ -185,7 +185,7 @@ Natural language queries often don't match well with recipe text. For example:
 Create an LLM-powered agent with three strategies:
 
 1. **Keywords Extraction**: Extract key cooking terms and ingredients
-2. **Query Rewriting**: Rewrite for better search effectiveness  
+2. **Query Rewriting**: Rewrite for better search effectiveness
 3. **Query Expansion**: Add synonyms and related cooking terms
 
 **Performance Features:**
@@ -198,7 +198,7 @@ Create an LLM-powered agent with three strategies:
 class QueryRewriteAgent:
     def __init__(self, model: str = "gpt-4o-mini", max_workers: int = 10)
     def extract_search_keywords(self, query: str) -> str
-    def rewrite_for_search(self, query: str) -> str  
+    def rewrite_for_search(self, query: str) -> str
     def expand_query_with_synonyms(self, query: str) -> str
     def batch_process_queries(self, queries: List[str], strategy: str) -> List[Dict]
     def batch_process_multiple_strategies(self, queries: List[str]) -> Dict[str, List[Dict]]
@@ -215,7 +215,7 @@ Compare baseline BM25 with agent-enhanced retrieval:
 
 **Key Performance Optimizations:**
 - **Batch Processing**: Process all 100+ queries × 3 strategies in parallel
-- **Pre-computation**: Separate query processing from evaluation for efficiency  
+- **Pre-computation**: Separate query processing from evaluation for efficiency
 - **Progress Tracking**: Real-time progress bars and performance metrics
 - **Error Handling**: Graceful degradation for failed LLM calls
 
@@ -232,7 +232,7 @@ Measure improvements in:
 Good implementations typically see:
 - **5-15% improvement** in Recall@5 from query optimization
 - **Keywords strategy**: Works well for technical queries
-- **Rewrite strategy**: Best overall performance  
+- **Rewrite strategy**: Best overall performance
 - **Expand strategy**: Helps with sparse matches
 - **Processing Speed**: 50-100+ queries/second with parallel processing
 - **Total Time**: Complete evaluation in under 30 seconds for 100 queries
@@ -244,7 +244,7 @@ Good implementations typically see:
 ```bash
 # From homeworks/hw4 directory
 python scripts/process_recipes.py       # Process dataset
-python scripts/generate_queries.py      # Generate synthetic queries  
+python scripts/generate_queries.py      # Generate synthetic queries
 python scripts/review_queries.py        # [Optional] Review and refine queries
 python scripts/evaluate_retrieval.py    # Evaluate BM25 performance
 ```
@@ -261,7 +261,7 @@ The reference implementation provides all the above scripts as working examples.
 
 This repository contains a complete reference implementation showing one approach to this assignment. You can:
 - **Study the code structure** to understand the RAG pipeline
-- **Run the scripts yourself** to see expected behavior  
+- **Run the scripts yourself** to see expected behavior
 - **Implement your own version** from scratch for full learning value
 
 The reference implementation includes both basic BM25 evaluation (Parts 1-2) and the optional query rewrite agent enhancement (Part 3).
@@ -271,7 +271,7 @@ The reference implementation includes both basic BM25 evaluation (Parts 1-2) and
 homeworks/hw4/
 ├── scripts/
 │   ├── process_recipes.py                  # Dataset processing
-│   ├── generate_queries.py                 # Synthetic query generation  
+│   ├── generate_queries.py                 # Synthetic query generation
 │   ├── review_queries.py                   # Query review interface
 │   ├── evaluate_retrieval.py               # BM25 evaluation (Parts 1-2)
 │   └── evaluate_retrieval_with_agent.py    # Agent comparison (Part 3)
@@ -292,4 +292,4 @@ homeworks/hw4/
 
 ---
 
-Good luck building your retrieval evaluation system! 🍳📊 
+Good luck building your retrieval evaluation system! 🍳📊

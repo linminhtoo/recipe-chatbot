@@ -38,7 +38,7 @@ Our traces use `reference_files/dietary_queries.csv`—60 challenging edge cases
 
 TIP:  Use `reference_files/trace_viewer.html` to look at the traces.  It was generated with claude code and the following query:
 
-> "Make a self contained HTML file to view the jsonl files.  It should instruct to upload one of the 2 files to a 
+> "Make a self contained HTML file to view the jsonl files.  It should instruct to upload one of the 2 files to a
 viewer, where people can navigate between the traces and see all the info in a minimal, but reasonable way."
 
 ### Option 3: Start with Labels
@@ -50,7 +50,7 @@ Use our `reference_files/labeled_traces.jsonl` (101 labeled examples):
 
 TIP:  Use `reference_files/trace_viewer.html` to look at the traces.  It was generated with claude code and the following query:
 
-> "Make a self contained HTML file to view the jsonl files.  It should instruct to upload one of the 2 files to a 
+> "Make a self contained HTML file to view the jsonl files.  It should instruct to upload one of the 2 files to a
 viewer, where people can navigate between the traces and see all the info in a minimal, but reasonable way."
 
 ## Steps
@@ -151,7 +151,7 @@ Fail:
 ## Key Metrics
 
 - **True Positive Rate (TPR)**: How often the judge correctly identifies adherent recipes
-- **True Negative Rate (TNR)**: How often the judge correctly identifies non-adherent recipes  
+- **True Negative Rate (TNR)**: How often the judge correctly identifies non-adherent recipes
 - **Corrected Success Rate**: True adherence rate accounting for judge errors
 - **95% Confidence Interval**: Range for the corrected success rate
 

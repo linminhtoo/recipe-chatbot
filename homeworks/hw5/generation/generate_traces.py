@@ -55,21 +55,19 @@ STATE_INDEX = {s: i for i, s in enumerate(PIPELINE_STATES)}
 
 # Non-uniform sampling weights for FIRST failure state (must align with list)
 FAILURE_WEIGHTS: List[int] = [
-    6,   # ParseRequest
-    5,   # PlanToolCalls
+    6,  # ParseRequest
+    5,  # PlanToolCalls
     10,  # GenCustomerArgs
     12,  # GetCustomerProfile
     15,  # GenRecipeArgs
     30,  # GetRecipes
-    7,   # GenWebArgs
-    9,   # GetWebInfo
-    5,   # ComposeResponse
-    1,   # DeliverResponse
+    7,  # GenWebArgs
+    9,  # GetWebInfo
+    5,  # ComposeResponse
+    1,  # DeliverResponse
 ]
 
-assert len(FAILURE_WEIGHTS) == len(
-    PIPELINE_STATES
-), "Weights length must match number of states"
+assert len(FAILURE_WEIGHTS) == len(PIPELINE_STATES), "Weights length must match number of states"
 
 N_TRACES_DEFAULT = 100
 MODEL = "gpt-4.1"
@@ -82,14 +80,12 @@ LABELED_TRACES_PATH = DATA_DIR / "labeled_traces.json"
 # LLM helper via litellm
 # -------------------------------------------------------------
 
-def chat_completion(messages: List[Dict[str, str]], *, max_tokens: int = 256, temperature: float = 0.7, **kwargs) -> str:
+
+def chat_completion(
+    messages: List[Dict[str, str]], *, max_tokens: int = 256, temperature: float = 0.7, **kwargs
+) -> str:
     """Wrapper around litellm.completion returning content string."""
-    resp = litellm.completion(
-        model=MODEL,
-        messages=messages,
-        temperature=temperature,
-        **kwargs,
-    )
+    resp = litellm.completion(model=MODEL, messages=messages, temperature=temperature, **kwargs)
     return resp.choices[0].message.content.strip()
 
 
@@ -98,6 +94,7 @@ def chat_completion(messages: List[Dict[str, str]], *, max_tokens: int = 256, te
 # -------------------------------------------------------------
 
 # 1. State sampling helpers ----------------------------------------------------
+
 
 def pick_first_failure_state() -> str:
     """Sample first_failure_state using predefined weights."""
@@ -135,7 +132,7 @@ FAILURE_TEMPLATES: Dict[str, str] = {
     "GenWebArgs": "TOOL_CALL[GenWebArgs] Error: failed to construct valid search terms.",
     "GetWebInfo": "TOOL_CALL[GetWebInfo] Error: HTTP 503 – service unavailable.",
     "ComposeResponse": "Traceback (most recent call last): KeyError: 'proteinCount' during response assembly.",
-    "DeliverResponse": "…"  # DeliverResponse failure will manifest as an empty / partial response.
+    "DeliverResponse": "…",  # DeliverResponse failure will manifest as an empty / partial response.
 }
 
 
@@ -167,10 +164,7 @@ def build_conversation(last_success: str, first_failure: str) -> List[Dict[str, 
         messages.append({"role": "user", "content": "Sounds good—please continue."})
 
     # Failure message
-    failure_msg = FAILURE_TEMPLATES.get(
-        first_failure,
-        f"TOOL_CALL[{first_failure}] Error: unexpected failure.",
-    )
+    failure_msg = FAILURE_TEMPLATES.get(first_failure, f"TOOL_CALL[{first_failure}] Error: unexpected failure.")
     messages.append({"role": "agent", "content": failure_msg})
 
     # Continue with remaining states (success variants) until we hit 8–10 messages
@@ -191,6 +185,7 @@ def build_conversation(last_success: str, first_failure: str) -> List[Dict[str, 
 
 
 # 3. LLM-based conversation generation ---------------------------------------
+
 
 def generate_conversation_llm(last_success: str, first_failure: str) -> List[Dict[str, str]]:
     """Use GPT via litellm to craft a coherent conversation trace."""
@@ -240,12 +235,7 @@ def generate_conversation_llm(last_success: str, first_failure: str) -> List[Dic
         },
     ]
 
-    response = chat_completion(
-        messages_input,
-        temperature=0.6,
-        max_tokens=500,
-        response_format={"type": "json_object"},
-    )
+    response = chat_completion(messages_input, temperature=0.6, max_tokens=500, response_format={"type": "json_object"})
 
     try:
         parsed = json.loads(response)
@@ -258,14 +248,14 @@ def generate_conversation_llm(last_success: str, first_failure: str) -> List[Dic
 
     return msgs
 
+
 # -------------------------------------------------------------
 # Main generation routine
 # -------------------------------------------------------------
 
+
 def generate_traces(
-    n_traces: int = N_TRACES_DEFAULT,
-    seed: int | None = None,
-    max_workers: int = 32,
+    n_traces: int = N_TRACES_DEFAULT, seed: int | None = None, max_workers: int = 32
 ) -> Tuple[List[Dict], List[Dict]]:
     """Generate traces in parallel – returns (raw_traces, labeled_traces)."""
 
@@ -285,18 +275,14 @@ def generate_traces(
             try:
                 messages = generate_conversation_llm(last_success, first_failure)
                 break
-            except Exception as exc:
+            except Exception:
                 if attempt >= retries:
                     raise
                 continue
         trace_id = str(uuid.uuid4())
 
         raw_obj = {"conversation_id": trace_id, "messages": messages}
-        labeled_obj = {
-            **raw_obj,
-            "last_success_state": last_success,
-            "first_failure_state": first_failure,
-        }
+        labeled_obj = {**raw_obj, "last_success_state": last_success, "first_failure_state": first_failure}
         return raw_obj, labeled_obj
 
     workers = min(max_workers, n_traces)
@@ -317,6 +303,7 @@ def generate_traces(
 # -------------------------------------------------------------
 # CLI Entry
 # -------------------------------------------------------------
+
 
 def main():
     import argparse
@@ -345,4 +332,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main() 
+    main()
