@@ -15,13 +15,14 @@ from pathlib import Path
 import hashlib
 import json
 import os
+from functools import lru_cache
 from typing import List, Dict, Any
 
-import litellm  # type: ignore
 from sklearn.metrics import confusion_matrix
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dotenv import load_dotenv
 from pydantic import BaseModel
+from openai import OpenAI
 
 try:
     from tqdm import tqdm
@@ -34,7 +35,6 @@ except ModuleNotFoundError:  # pragma: no cover
 load_dotenv()
 
 DATA_PATH = Path("lesson-4/nurtureboss_traces_labeled.json")
-MODEL_NAME = "gpt-4.1"
 
 # Threadpool size for model calls
 MAX_WORKERS = int(os.environ.get("NB_LLM_WORKERS", "64"))
@@ -141,9 +141,28 @@ def compute_tpr_tnr(y_true: List[bool], y_pred: List[bool]):
 # ---------------------------------------------------------------------------
 
 
+def _get_env_var(name: str) -> str:
+    value = os.environ.get(name)
+    if not value:
+        raise RuntimeError(f"{name} is required but missing. Update your .env configuration.")
+    return value
+
+
+@lru_cache(maxsize=1)
+def _get_vllm_client() -> OpenAI:
+    return OpenAI(api_key=_get_env_var("VLLM_API_KEY"), base_url=_get_env_var("VLLM_API_URL"))
+
+
+@lru_cache(maxsize=1)
+def _get_vllm_model_id() -> str:
+    models = _get_vllm_client().models.list()
+    if not models.data:
+        raise RuntimeError("No models available on the vLLM server.")
+    return models.data[0].id
+
+
 def main() -> None:
-    if "OPENAI_API_KEY" not in os.environ:
-        raise RuntimeError("Missing OPENAI_API_KEY")
+    _get_vllm_client()  # Fail fast if configuration is missing.
 
     with DATA_PATH.open() as fp:
         records = json.load(fp)
@@ -175,15 +194,16 @@ def main() -> None:
                 example_pass=example_pass_combined,
                 example_fail=example_fail_combined,
             )
-            resp_raw = litellm.completion(
-                model=MODEL_NAME,
+            resp_raw = _get_vllm_client().chat.completions.create(
+                model=_get_vllm_model_id(),
                 messages=[{"role": "user", "content": prompt}],
                 temperature=0,
-                response_format=JudgeResult,
+                response_format={"type": "json_object"},
             )
-
-            # LiteLLM still returns OpenAI-style object; extract JSON and parse
-            parsed = JudgeResult(**json.loads(resp_raw.choices[0].message.content))  # type: ignore[attr-defined]
+            content = resp_raw.choices[0].message.content
+            if content is None:
+                raise ValueError("vLLM returned an empty completion.")
+            parsed = JudgeResult(**json.loads(content))  # type: ignore[attr-defined]
             return parsed.all_responses_substantiated
 
         y_pred: List[bool] = [False] * len(split_recs)

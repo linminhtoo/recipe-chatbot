@@ -8,7 +8,7 @@ Outputs (written to ../../data/):
 • raw_traces.json        – list[dict]  {conversation_id, messages}
 • labeled_traces.json    – same objects + last_success_state + first_failure_state
 
-The generation procedure uses **GPT-4.1** twice per trace:
+The generation procedure uses the configured vLLM-hosted model twice per trace:
 1.  Select a plausible `last_success_state` that precedes a sampled
     `first_failure_state`.
 2.  Produce a short conversation (≤ 10 messages) that progresses through the
@@ -16,7 +16,7 @@ The generation procedure uses **GPT-4.1** twice per trace:
     `first_failure_state`.
 
 Environment:
-• Requires OPENAI_API_KEY to be set (dotenv supported).
+• Requires VLLM_API_KEY and VLLM_API_URL to be set (dotenv supported).
 • Install dependencies in homeworks/hw5/requirements.txt (openai, python-dotenv, tqdm).
 """
 
@@ -26,10 +26,11 @@ import json
 import os
 import random
 import uuid
+from functools import lru_cache
 from pathlib import Path
 from typing import Dict, List, Tuple
 
-import litellm
+from openai import OpenAI
 from dotenv import load_dotenv
 from tqdm import tqdm
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -70,23 +71,47 @@ FAILURE_WEIGHTS: List[int] = [
 assert len(FAILURE_WEIGHTS) == len(PIPELINE_STATES), "Weights length must match number of states"
 
 N_TRACES_DEFAULT = 100
-MODEL = "gpt-4.1"
 
 DATA_DIR = Path(__file__).resolve().parent.parent / "data"
 RAW_TRACES_PATH = DATA_DIR / "raw_traces.json"
 LABELED_TRACES_PATH = DATA_DIR / "labeled_traces.json"
 
 # -------------------------------------------------------------
-# LLM helper via litellm
+# LLM helper
 # -------------------------------------------------------------
+
+
+def _get_env_var(name: str) -> str:
+    value = os.environ.get(name)
+    if not value:
+        raise RuntimeError(f"{name} is required but missing. Update your .env configuration.")
+    return value
+
+
+@lru_cache(maxsize=1)
+def _get_vllm_client() -> OpenAI:
+    return OpenAI(api_key=_get_env_var("VLLM_API_KEY"), base_url=_get_env_var("VLLM_API_URL"))
+
+
+@lru_cache(maxsize=1)
+def _get_vllm_model_id() -> str:
+    models = _get_vllm_client().models.list()
+    if not models.data:
+        raise RuntimeError("No models available on the vLLM server.")
+    return models.data[0].id
 
 
 def chat_completion(
     messages: List[Dict[str, str]], *, max_tokens: int = 256, temperature: float = 0.7, **kwargs
 ) -> str:
-    """Wrapper around litellm.completion returning content string."""
-    resp = litellm.completion(model=MODEL, messages=messages, temperature=temperature, **kwargs)
-    return resp.choices[0].message.content.strip()
+    """Wrapper around the vLLM-backed OpenAI-compatible chat completions API."""
+    resp = _get_vllm_client().chat.completions.create(
+        model=_get_vllm_model_id(), messages=messages, temperature=temperature, **kwargs
+    )
+    content = resp.choices[0].message.content
+    if content is None:
+        raise ValueError("vLLM returned an empty completion.")
+    return content.strip()
 
 
 # -------------------------------------------------------------
@@ -188,7 +213,7 @@ def build_conversation(last_success: str, first_failure: str) -> List[Dict[str, 
 
 
 def generate_conversation_llm(last_success: str, first_failure: str) -> List[Dict[str, str]]:
-    """Use GPT via litellm to craft a coherent conversation trace."""
+    """Use the configured vLLM-backed model to craft a coherent conversation trace."""
 
     # Provide examples for tool call formatting and error examples
     tool_examples = (
@@ -315,8 +340,8 @@ def main():
 
     # Load env vars
     load_dotenv()
-    if "OPENAI_API_KEY" not in os.environ:
-        raise RuntimeError("OPENAI_API_KEY not set in environment")
+    if "VLLM_API_KEY" not in os.environ or "VLLM_API_URL" not in os.environ:
+        raise RuntimeError("VLLM_API_KEY and VLLM_API_URL must be set in the environment")
 
     DATA_DIR.mkdir(parents=True, exist_ok=True)
 

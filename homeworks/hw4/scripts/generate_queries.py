@@ -7,24 +7,47 @@ and specific ingredient techniques that are best answered by retrieving existing
 """
 
 import json
+import os
 import random
+from functools import lru_cache
 from pathlib import Path
 from typing import List, Dict, Any, Optional
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from tqdm import tqdm
-import litellm
+from openai import OpenAI
 from dotenv import load_dotenv
 
 # Load environment variables
 load_dotenv()
 
 
+def _get_env_var(name: str) -> str:
+    value = os.environ.get(name)
+    if not value:
+        raise RuntimeError(f"{name} is required but missing. Update your .env configuration.")
+    return value
+
+
+@lru_cache(maxsize=1)
+def _get_vllm_client() -> OpenAI:
+    return OpenAI(api_key=_get_env_var("VLLM_API_KEY"), base_url=_get_env_var("VLLM_API_URL"))
+
+
+@lru_cache(maxsize=1)
+def _get_vllm_model_id() -> str:
+    models = _get_vllm_client().models.list()
+    if not models.data:
+        raise RuntimeError("No models available on the vLLM server.")
+    return models.data[0].id
+
+
 class QueryGenerator:
     """Generates synthetic queries for recipe retrieval evaluation."""
 
-    def __init__(self, model: str = "gpt-4o-mini"):
-        self.model = model
+    def __init__(self):
         self.generated_queries = []
+        self._client = _get_vllm_client()
+        self._model_id = _get_vllm_model_id()
 
     def extract_salient_facts(self, recipe: Dict[str, Any]) -> str:
         """
@@ -52,10 +75,13 @@ Salient Fact(s):
 """
 
         try:
-            response = litellm.completion(
-                model=self.model, messages=[{"role": "user", "content": prompt}], temperature=0.3, max_tokens=200
+            response = self._client.chat.completions.create(
+                model=self._model_id,
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0.3,
+                max_tokens=200,
             )
-            return response.choices[0].message.content.strip()
+            return (response.choices[0].message.content or "").strip()
         except Exception as e:
             print(f"Error extracting facts: {e}")
             return ""
@@ -91,10 +117,13 @@ Generate ONE specific query:
 """
 
         try:
-            response = litellm.completion(
-                model=self.model, messages=[{"role": "user", "content": prompt}], temperature=0.7, max_tokens=100
+            response = self._client.chat.completions.create(
+                model=self._model_id,
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0.7,
+                max_tokens=100,
             )
-            return response.choices[0].message.content.strip().strip('"')
+            return (response.choices[0].message.content or "").strip().strip('"')
         except Exception as e:
             print(f"Error generating query: {e}")
             return ""

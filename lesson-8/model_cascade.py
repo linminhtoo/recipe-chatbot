@@ -1,27 +1,43 @@
+import os
 import random
-import litellm
-from litellm import completion, model_cost, Cache
+from functools import lru_cache
+from typing import Tuple
+
 import pandas as pd
 import numpy as np
 from concurrent.futures import ThreadPoolExecutor
 from tqdm import tqdm
-from typing import Tuple
 from dotenv import load_dotenv
+from openai import OpenAI
 
-# Set up caching and environment
-litellm.cache = Cache(type="disk")
+# Set up environment
 load_dotenv()
 random.seed(42)
 
 TARGET_ACCURACY = 0.99
 
+MODEL_PRICING = {
+    "gpt-4o-mini": {
+        "input_cost_per_token": 0.15 / 1_000_000,
+        "output_cost_per_token": 0.60 / 1_000_000,
+        "input_cost_per_cached_token": 0.15 / 1_000_000,
+    },
+    "gpt-4o": {
+        "input_cost_per_token": 5 / 1_000_000,
+        "output_cost_per_token": 15 / 1_000_000,
+        "input_cost_per_cached_token": 5 / 1_000_000,
+    },
+}
+
 
 def cost_given_token_breakdown(
     model: str, input_tokens_not_cached: int, input_tokens_cached: int, output_tokens: int
 ) -> float:
-    input_cost_per_token = model_cost[model]["input_cost_per_token"]
-    output_cost_per_token = model_cost[model]["output_cost_per_token"]
-    input_cost_per_cached_token = model_cost[model]["cache_read_input_token_cost"]
+    if model not in MODEL_PRICING:
+        return 0.0
+    input_cost_per_token = MODEL_PRICING[model]["input_cost_per_token"]
+    output_cost_per_token = MODEL_PRICING[model]["output_cost_per_token"]
+    input_cost_per_cached_token = MODEL_PRICING[model]["input_cost_per_cached_token"]
 
     return (
         input_cost_per_token * input_tokens_not_cached
@@ -32,7 +48,12 @@ def cost_given_token_breakdown(
 
 def cost_of_completion(response) -> float:
     model = response.model
-    return cost_given_token_breakdown(model, response.usage["prompt_tokens"], 0, response.usage["completion_tokens"])
+    usage = getattr(response, "usage", None)
+    if not usage:
+        return 0.0
+    prompt_tokens = usage.get("prompt_tokens", 0)
+    completion_tokens = usage.get("completion_tokens", 0)
+    return cost_given_token_breakdown(model, prompt_tokens, 0, completion_tokens)
 
 
 def get_answer_prob_binary(logprobs_dict, answer):
@@ -52,6 +73,26 @@ def get_answer_prob_binary(logprobs_dict, answer):
     return max(probs.values())
 
 
+def _get_env_var(name: str) -> str:
+    value = os.environ.get(name)
+    if not value:
+        raise RuntimeError(f"{name} is required but missing. Update your .env configuration.")
+    return value
+
+
+@lru_cache(maxsize=1)
+def _get_vllm_client() -> OpenAI:
+    return OpenAI(api_key=_get_env_var("VLLM_API_KEY"), base_url=_get_env_var("VLLM_API_URL"))
+
+
+@lru_cache(maxsize=1)
+def _get_vllm_model_id() -> str:
+    models = _get_vllm_client().models.list()
+    if not models.data:
+        raise RuntimeError("No models available on the vLLM server.")
+    return models.data[0].id
+
+
 def process_doc(model: str, text: str) -> Tuple[int, float, float]:
     prompt = f"""I will give you an SMS text message. Here is the message: {text}
 
@@ -65,27 +106,30 @@ Your task is to determine if this message is either legitimate or harmless spam.
 You must respond with ONLY True or False:"""
 
     try:
-        res = completion(
-            model=model,
+        res = _get_vllm_client().chat.completions.create(
+            model=_get_vllm_model_id(),
             messages=[{"role": "user", "content": prompt}],
             logprobs=True,
             top_logprobs=10,
             max_tokens=1,
-            num_retries=5,
-            caching=True,
             temperature=0.0,
             timeout=10,
         )
 
-        response = res.choices[0].message.content
-        response_converted = 1 if response.lower() == "true" else 0
+        raw_content = res.choices[0].message.content or ""
+        response_converted = 1 if raw_content.lower() == "true" else 0
 
         # Get confidence only for proxy model
         if model == "gpt-4o-mini":
-            first_logprob = res.choices[0].logprobs["content"][0]
-            confidence = get_answer_prob_binary(
-                {item.token: item.logprob for item in first_logprob.top_logprobs}, response_converted
-            )
+            logprobs = res.choices[0].logprobs
+            confidence = 0.0
+            if logprobs and logprobs.content:
+                first_logprob = logprobs.content[0]
+                top = first_logprob.top_logprobs or []
+                confidence = get_answer_prob_binary(
+                    {item.token: item.logprob for item in top},
+                    response_converted,
+                )
         else:
             confidence = 0.0  # No confidence for oracle
 

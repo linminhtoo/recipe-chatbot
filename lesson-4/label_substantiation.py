@@ -22,9 +22,10 @@ import hashlib
 import json
 import os
 from collections import Counter
+from functools import lru_cache
 from typing import List, Dict, Any
 
-import litellm  # type: ignore
+from openai import OpenAI
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 # tqdm is optional – fall back to identity iterator if missing
@@ -47,7 +48,6 @@ load_dotenv()
 
 DATA_PATH = Path("lesson-4/nurtureboss_traces.json")
 OUTPUT_PATH = Path("lesson-4/nurtureboss_traces_labeled.json")
-MODEL_NAME = "gpt-4.1"
 
 # Thread-pool size; override via env variable if desired
 MAX_WORKERS = int(os.environ.get("NB_LLM_WORKERS", "64"))
@@ -126,6 +126,26 @@ Return ONLY JSON with the two keys shown above – no additional text.
 # ---------------------------------------------------------------------------
 
 
+def _get_env_var(name: str) -> str:
+    value = os.environ.get(name)
+    if not value:
+        raise RuntimeError(f"{name} is required but missing. Update your .env configuration.")
+    return value
+
+
+@lru_cache(maxsize=1)
+def _get_vllm_client() -> OpenAI:
+    return OpenAI(api_key=_get_env_var("VLLM_API_KEY"), base_url=_get_env_var("VLLM_API_URL"))
+
+
+@lru_cache(maxsize=1)
+def _get_vllm_model_id() -> str:
+    models = _get_vllm_client().models.list()
+    if not models.data:
+        raise RuntimeError("No models available on the vLLM server.")
+    return models.data[0].id
+
+
 def main() -> None:
     with DATA_PATH.open() as fp:
         records: List[Dict[str, Any]] = json.load(fp)
@@ -141,13 +161,16 @@ def main() -> None:
             z_note=rec.get("z_note"),
         )
 
-        resp = litellm.completion(
-            model=MODEL_NAME,
+        resp = _get_vllm_client().chat.completions.create(
+            model=_get_vllm_model_id(),
             messages=[{"role": "user", "content": prompt}],
-            response_format=SubstantiationResult,
+            response_format={"type": "json_object"},
             temperature=0,
         )
-        resp = SubstantiationResult(**json.loads(resp.choices[0].message.content))
+        content = resp.choices[0].message.content
+        if content is None:
+            raise ValueError("vLLM returned an empty completion.")
+        resp = SubstantiationResult(**json.loads(content))
         return resp
 
     updated = 0
