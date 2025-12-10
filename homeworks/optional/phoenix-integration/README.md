@@ -13,7 +13,7 @@ This homework teaches you to add comprehensive tracing and observability to conv
 By completing this assignment, you will:
 - Set up Phoenix tracing infrastructure for LLM applications
 - Implement session-based conversation tracking
-- Instrument FastAPI endpoints and LiteLLM calls
+- Instrument FastAPI endpoints and OpenAI-compatible vLLM calls
 - Visualize conversation flows and debug chat interactions
 - Monitor application performance and user behavior patterns
 
@@ -29,7 +29,7 @@ Add Phoenix packages to your `requirements.txt`:
 
 ```
 arize-phoenix-otel
-openinference-instrumentation-litellm
+openinference-instrumentation-openai
 openinference-instrumentation
 ```
 
@@ -102,7 +102,7 @@ Create `backend/tracing.py` to configure Phoenix tracing:
 import os
 import uuid
 from phoenix.otel import register
-from openinference.instrumentation.litellm import LiteLLMInstrumentor
+from openinference.instrumentation.openai import OpenAIInstrumentor
 
 def setup_local_phoenix_tracing():
     """Initialize Phoenix tracing with environment configuration."""
@@ -113,7 +113,7 @@ def setup_local_phoenix_tracing():
     os.environ["PHOENIX_ENDPOINT"] = phoenix_endpoint
     print(f"Using local Phoenix endpoint: {phoenix_endpoint}")
 
-    # TODO: Instrument LiteLLM before registering Phoenix
+    # TODO: Instrument the OpenAI client before registering Phoenix
 
     # TODO: Configure the Phoenix tracer with project name
 
@@ -123,7 +123,7 @@ def setup_local_phoenix_tracing():
 
 **Your Task**: Complete the TODOs in this function by:
 1. Copy starter code into `backend/tracing.py` file you create
-2. Use `LiteLLMInstrumentor` to instrument LiteLLM calls
+2. Use `OpenAIInstrumentor` to instrument calls to the OpenAI-compatible client
 3. Call `register()` with appropriate project name and auto-instrumentation
 4. Returning a tracer from the tracer provider
 

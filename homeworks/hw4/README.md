@@ -77,10 +77,11 @@ Implement an LLM-powered query rewrite agent to optimize queries before BM25 sea
 ### Prerequisites
 ```bash
 # Install dependencies
-pip install rank-bm25 tqdm litellm python-dotenv
+pip install rank-bm25 tqdm openai python-dotenv
 
-# Set up your LLM API key in .env file
-echo "OPENAI_API_KEY=your_key_here" >> .env
+# Set up your vLLM server credentials in .env file
+echo "VLLM_API_URL=http://localhost:8000/v1" >> .env
+echo "VLLM_API_KEY=your_key_here" >> .env
 ```
 
 ### Step-by-Step Execution of Reference Implementation
@@ -161,7 +162,7 @@ You should expect:
 
 ### Dependencies
 - `rank-bm25`: Fast BM25 implementation
-- `litellm`: LLM integration for query generation
+- `openai`: Client for the OpenAI-compatible vLLM server
 - `tqdm`: Progress bars for long-running operations
 - `concurrent.futures`: Parallel processing support
 
