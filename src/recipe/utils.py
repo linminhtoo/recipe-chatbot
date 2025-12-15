@@ -3,10 +3,11 @@
 import os
 from functools import lru_cache
 from pathlib import Path
-from typing import List, Dict
+from typing import List, Dict, cast
 
-from openai import OpenAI
 from dotenv import load_dotenv
+from openai import OpenAI
+from openai.types.chat.chat_completion import ChatCompletion
 
 # Ensure the .env file is loaded as early as possible.
 load_dotenv(override=False)
@@ -54,7 +55,29 @@ def _get_vllm_model_id() -> str:
     return models.data[0].id
 
 
-def get_agent_response(messages: List[Dict[str, str]]) -> List[Dict[str, str]]:  # noqa: WPS231
+def map_model_id_to_generation_config(model_id: str) -> Dict[str, float]:
+    """Map model identifier to generation configuration parameters."""
+
+    # by default, we let vllm load generation config from model provider
+    config = {}
+
+    # Customize per model if needed
+    if "Ministral-3-14B-Instruct-2512" in model_id:
+        config.update({
+            "temperature": 0.1,
+        })
+    elif "Ministral-3-14B-Reasoning-2512" in model_id:
+        config.update({
+            "temperature": 0.7,
+            "top_p": 0.95,
+        })
+
+    return config
+
+
+def get_agent_response(
+    messages: List[Dict[str, str]],
+) -> List[Dict[str, str]]:  # noqa: WPS231
     """Call the underlying large-language model via the local vLLM server."""
 
     # The first message is assumed to be the system prompt if not explicitly provided
@@ -65,10 +88,15 @@ def get_agent_response(messages: List[Dict[str, str]]) -> List[Dict[str, str]]: 
     else:
         current_messages = messages
 
+    model_id = _get_vllm_model_id()
+    generation_config = map_model_id_to_generation_config(model_id)
+
     completion = _get_vllm_client().chat.completions.create(
-        model=_get_vllm_model_id(),
+        model=model_id,
         messages=current_messages,  # Pass the full history
+        **generation_config,
     )
+    completion = cast(ChatCompletion, completion)
 
     assistant_reply_content = (completion.choices[0].message.content or "").strip()
 
