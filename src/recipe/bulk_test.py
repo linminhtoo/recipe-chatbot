@@ -4,19 +4,19 @@ Reads a CSV file containing user queries, fires them against the agent
 concurrently, and stores the results for later manual evaluation.
 """
 
-from pathlib import Path
-
 import argparse
 import datetime as dt
 import json
 from concurrent.futures import ThreadPoolExecutor
+from pathlib import Path
 
 from rich.console import Console, Group
 from rich.markdown import Markdown
 from rich.panel import Panel
 from rich.text import Text
+from tqdm import tqdm
 
-from recipe.utils import get_agent_response
+from recipe.utils import SYSTEM_PROMPT_VERSION, get_agent_response
 
 # -----------------------------------------------------------------------------
 # Configuration
@@ -105,7 +105,7 @@ def run_bulk_test(csv_path: Path, num_workers: int = MAX_WORKERS) -> None:
     console.print("[bold blue]All queries processed.[/bold blue]")
 
     timestamp = dt.datetime.now().strftime("%Y%m%d_%H%M%S")
-    output_path = RESULTS_DIR / f"results_{timestamp}.json"
+    output_path = RESULTS_DIR / f"results_sys{SYSTEM_PROMPT_VERSION}_{timestamp}.json"
 
     write_results(output_path, results)
 
