@@ -92,7 +92,7 @@ def run_bulk_test(csv_path: Path, num_workers: int = MAX_WORKERS) -> None:
     Execute bulk testing of queries from CSV file.
 
     TODO's:
-    - our system prompt is fixed. how can we cache the prefill KV embeddings and 
+    - our system prompt is fixed. how can we cache the prefill KV embeddings and
         reuse across queries?
         * oooh, looking at my vllm server's logs:  Prefix cache hit rate: 87.8%
             which implies vllm is smartly caching prefixes already.

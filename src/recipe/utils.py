@@ -24,7 +24,7 @@ if SYSTEM_PROMPT_VERSION == "":
     raise RuntimeError(
         "SYSTEM_PROMPT_VERSION is empty. "
         "Check system_prompt_version.txt file and "
-        "ensure first line is of the format: version=<version_string>",
+        "ensure first line is of the format: version=<version_string>"
     )
 
 
@@ -63,21 +63,14 @@ def map_model_id_to_generation_config(model_id: str) -> Dict[str, float]:
 
     # Customize per model if needed
     if "Ministral-3-14B-Instruct-2512" in model_id:
-        config.update({
-            "temperature": 0.1,
-        })
+        config.update({"temperature": 0.1})
     elif "Ministral-3-14B-Reasoning-2512" in model_id:
-        config.update({
-            "temperature": 0.7,
-            "top_p": 0.95,
-        })
+        config.update({"temperature": 0.7, "top_p": 0.95})
 
     return config
 
 
-def get_agent_response(
-    messages: List[Dict[str, str]],
-) -> List[Dict[str, str]]:  # noqa: WPS231
+def get_agent_response(messages: List[Dict[str, str]]) -> List[Dict[str, str]]:  # noqa: WPS231
     """Call the underlying large-language model via the local vLLM server."""
 
     # The first message is assumed to be the system prompt if not explicitly provided
