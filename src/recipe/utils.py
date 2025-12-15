@@ -16,6 +16,15 @@ load_dotenv(override=False)
 # Load system prompt from markdown file
 _PROMPT_PATH = Path(__file__).parent / "system_prompt.md"
 SYSTEM_PROMPT = _PROMPT_PATH.read_text().strip()
+_PROMPT_VERSION_PATH = Path(__file__).parent / "system_prompt_version.txt"
+prompt_version_lines = _PROMPT_VERSION_PATH.read_text().strip().splitlines()
+SYSTEM_PROMPT_VERSION = prompt_version_lines[0].split("version=")[-1].strip()
+if SYSTEM_PROMPT_VERSION == "":
+    raise RuntimeError(
+        "SYSTEM_PROMPT_VERSION is empty. "
+        "Check system_prompt_version.txt file and "
+        "ensure first line is of the format: version=<version_string>",
+    )
 
 
 # --- Agent wrapper ---------------------------------------------------------------
