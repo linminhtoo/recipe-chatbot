@@ -225,6 +225,7 @@
         try {
           // Send the whole history
           const res = await fetch("/chat", {
+            // this POST will be handled/received by the FastAPI backend
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ messages: chatHistory }),

@@ -15,7 +15,7 @@ load_dotenv(override=False)
 
 # Load system prompt from markdown file
 _PROMPT_PATH = Path(__file__).parent / "system_prompt.md"
-SYSTEM_PROMPT: str = _PROMPT_PATH.read_text().strip()
+SYSTEM_PROMPT = _PROMPT_PATH.read_text().strip()
 
 
 # --- Agent wrapper ---------------------------------------------------------------
