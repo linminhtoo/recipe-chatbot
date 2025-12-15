@@ -1,21 +1,45 @@
 #!/bin/bash
 
-# reduce max-model-len from 262144 to 50k since we don't need so much
-# set gpu-memory-utilization to 0.6 to reduce memory usage to be polite on shared GPUs
-vllm serve mistralai/Ministral-3-14B-Reasoning-2512 \
-    --tensor-parallel-size 2 \
+now=$(date +"%Y%m%d_%H%M%S")
+
+# dont use reasoning model as we dont need it for our recipe chat bot.
+# unsloth.ai uploaded GGUF dynamic quantized weights, but vllm doesn't recognize? must use llama.cpp?
+# vllm serve unsloth/Ministral-3-14B-Instruct-2512-GGUF \
+# vllm serve mistralai/Ministral-3-14B-Instruct-2512-GGUF \
+# above 2 dont work with vllm serve, why?? need to do something special?
+vllm serve mistralai/Ministral-3-14B-Instruct-2512 \
     --tokenizer_mode mistral \
     --config_format mistral \
     --load_format mistral \
     --enable-auto-tool-choice \
     --tool-call-parser mistral \
-    --reasoning-parser mistral \
-    --max-model-len 50000 \
+    --tensor-parallel-size 2 \
+    --max-model-len 16384 \
     --gpu-memory-utilization 0.6 \
+    --max-num-batched-tokens 16 \
     --host 0.0.0.0 \
     --port 8989 \
-    --api-key test
+    --api-key test \
+    2>&1 | tee serve_vllm_ministral_3_14b_instruct_2512_$now.log
 
+# reduce max-model-len from 262144 to 50k since we don't need so much
+# set gpu-memory-utilization to 0.6 to reduce memory usage to be polite on shared GPUs
+# vllm serve mistralai/Ministral-3-14B-Reasoning-2512 \
+#     --tensor-parallel-size 2 \
+#     --tokenizer_mode mistral \
+#     --config_format mistral \
+#     --load_format mistral \
+#     --enable-auto-tool-choice \
+#     --tool-call-parser mistral \
+#     --reasoning-parser mistral \
+#     --max-model-len 50000 \
+#     --gpu-memory-utilization 0.6 \
+#     --host 0.0.0.0 \
+#     --port 8989 \
+#     --api-key test \
+#     2>&1 | tee serve_vllm_mistral_3_14b_reasoning_2512_$now.log
+
+# 192.168.3.184
 # (APIServer pid=2411522) INFO 12-11 00:07:04 [api_server.py:1847] Starting vLLM API server 0 on http://0.0.0.0:8989
 # (APIServer pid=2411522) INFO 12-11 00:07:04 [launcher.py:38] Available routes are:
 # (APIServer pid=2411522) INFO 12-11 00:07:04 [launcher.py:46] Route: /openapi.json, Methods: GET, HEAD
