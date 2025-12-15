@@ -17,7 +17,7 @@ load_dotenv(override=False)
 # Load system prompt from markdown file
 _PROMPT_PATH = Path(__file__).parent / "system_prompt.md"
 SYSTEM_PROMPT = _PROMPT_PATH.read_text().strip()
-_PROMPT_VERSION_PATH = Path(__file__).parent / "system_prompt_version.txt"
+_PROMPT_VERSION_PATH = Path(__file__).parent / "system_prompt_version.md"
 prompt_version_lines = _PROMPT_VERSION_PATH.read_text().strip().splitlines()
 SYSTEM_PROMPT_VERSION = prompt_version_lines[0].split("version=")[-1].strip()
 if SYSTEM_PROMPT_VERSION == "":
