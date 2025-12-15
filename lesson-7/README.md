@@ -1,4 +1,4 @@
-# Lesson 6: Custom Failure Mode Inspection Interface
+# Lesson 7: Custom Failure Mode Inspection Interface
 
 ## Overview
 
