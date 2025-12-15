@@ -88,7 +88,17 @@ def write_results(output_path: Path, results: list[tuple[str, str, str]]) -> Non
 
 
 def run_bulk_test(csv_path: Path, num_workers: int = MAX_WORKERS) -> None:
-    """Execute bulk testing of queries from CSV file."""
+    """
+    Execute bulk testing of queries from CSV file.
+
+    TODO's:
+    - our system prompt is fixed. how can we cache the prefill KV embeddings and 
+        reuse across queries?
+        * oooh, looking at my vllm server's logs:  Prefix cache hit rate: 87.8%
+            which implies vllm is smartly caching prefixes already.
+            when does the prefix cache get invalidated?
+            does it only cache within a batch and discard ... ?
+    """
     console = Console()
 
     queries = read_queries(csv_path)
@@ -96,11 +106,17 @@ def run_bulk_test(csv_path: Path, num_workers: int = MAX_WORKERS) -> None:
 
     console.print(f"[bold blue]Processing {len(queries)} queries with {actual_workers} workers...[/bold blue]")
 
+    total = len(queries)
+    results = []
     with ThreadPoolExecutor(max_workers=actual_workers) as executor:
-        results = list(executor.map(lambda item: process_query(item["id"], item["query"]), queries))
-
-    for i, (query_id, query, response) in enumerate(results):
-        print_result(console, i, len(results), query_id, query, response)
+        # results = list(executor.map(lambda item: process_query(item["id"], item["query"]), queries))
+        for i, (query_id, query, response) in tqdm(
+            enumerate(executor.map(lambda item: process_query(item["id"], item["query"]), queries)),
+            total=total,
+            desc="Processing queries",
+        ):
+            results.append((query_id, query, response))
+            print_result(console, i, total, query_id, query, response)
 
     console.print("[bold blue]All queries processed.[/bold blue]")
 
